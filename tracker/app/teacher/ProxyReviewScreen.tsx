@@ -189,39 +189,51 @@ function ProxyStudentCard({
 							flexDirection: 'row',
 							alignItems: 'center',
 							justifyContent: 'space-between',
-							padding: 12,
+							padding: 10,
 							backgroundColor: '#f9fafb',
 							borderRadius: 8
 						}}>
-							<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-								<Text style={{ fontSize: 14, fontWeight: '500', color: '#374151' }}>
-									Status:
-								</Text>
+							<View style={{ 
+								flexDirection: 'row', 
+								alignItems: 'center', 
+								gap: 6,
+								flex: 1,
+								marginRight: 8
+							}}>
+								<MaterialIcons 
+									name={isUploaded ? "check-circle" : "error"} 
+									size={16} 
+									color={isUploaded ? '#16a34a' : '#dc2626'} 
+								/>
 								<Text style={{
-									fontSize: 14,
-									fontWeight: 'bold',
+									fontSize: 13,
+									fontWeight: '600',
 									color: isUploaded ? '#16a34a' : '#dc2626'
 								}}>
 									{isUploaded ? 'Uploaded' : 'Not Uploaded'}
 								</Text>
 							</View>
-							<View style={{ flexDirection: 'row', gap: 8 }}>
+							<View style={{ flexDirection: 'row', gap: 6 }}>
 								{isUploaded && !student.isRevoked && (
 									<TouchableOpacity
 										onPress={() => onShowImage(student)}
 										style={{
-											paddingHorizontal: 12,
+											paddingHorizontal: 10,
 											paddingVertical: 6,
 											borderRadius: 6,
-											backgroundColor: '#137fec'
+											backgroundColor: '#137fec',
+											flexDirection: 'row',
+											alignItems: 'center',
+											gap: 4
 										}}
 									>
+										<MaterialIcons name="photo" size={16} color="white" />
 										<Text style={{
-											fontSize: 14,
+											fontSize: 13,
 											fontWeight: '600',
 											color: 'white'
 										}}>
-											Show Image
+											View
 										</Text>
 									</TouchableOpacity>
 								)}
@@ -229,14 +241,18 @@ function ProxyStudentCard({
 									<TouchableOpacity
 										onPress={() => onRevoke(student)}
 										style={{
-											paddingHorizontal: 12,
+											paddingHorizontal: 10,
 											paddingVertical: 6,
 											borderRadius: 6,
-											backgroundColor: '#fee2e2'
+											backgroundColor: '#fee2e2',
+											flexDirection: 'row',
+											alignItems: 'center',
+											gap: 4
 										}}
 									>
+										<MaterialIcons name="block" size={16} color="#dc2626" />
 										<Text style={{
-											fontSize: 14,
+											fontSize: 13,
 											fontWeight: '600',
 											color: '#dc2626'
 										}}>
