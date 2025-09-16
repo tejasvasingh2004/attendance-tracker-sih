@@ -1,9 +1,7 @@
-// import { Text, View } from "react-native";
-import AttendanceScreen from "./student/attendance";
-import StudentHome from "./student/home";
+import TeacherAttendanceHome from "./teacher/home";
 
 export default function Index() {
 	return (
-		<StudentHome/>
+		<TeacherAttendanceHome/>
 	);
 }
