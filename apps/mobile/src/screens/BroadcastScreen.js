@@ -2,26 +2,35 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function AttendanceScreen() {
+export default function BroadcastScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>ATTENDANCE</Text>
+        <TouchableOpacity style={styles.closeButton}>
+          <Text style={styles.closeIcon}>×</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>BROADCAST SIGNAL</Text>
       </View>
       <View style={styles.container}>
-        <Text style={styles.title}>Take Attendance</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.optionButton}>
-            <View style={styles.cameraIconPlaceholder} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.optionButton}>
-            <View style={styles.folderIconPlaceholder} />
-          </TouchableOpacity>
+        <Text style={styles.broadcastingText}>Broadcasting signal</Text>
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBar} />
         </View>
+        <Text style={styles.infoText}>Students can now mark their attendance through their app.</Text>
+        <View style={styles.timerContainer}>
+          <View style={styles.timerBox}>
+            <Text style={styles.timerValue}>02</Text>
+            <Text style={styles.timerLabel}>Minutes</Text>
+          </View>
+          <View style={styles.timerBox}>
+            <Text style={styles.timerValue}>30</Text>
+            <Text style={styles.timerLabel}>Seconds</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.stopButton}>
+          <Text style={styles.stopButtonText}>Stop Broadcast</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.broadcastButton}>
-        <Text style={styles.broadcastButtonText}>Broadcast Signal</Text>
-      </TouchableOpacity>
       <View style={styles.bottomNav}>
         <View style={styles.navItem}>
           <Text style={styles.navIcon}>🏠</Text>
@@ -54,64 +63,81 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   headerTitle: {
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
   },
+  closeButton: {
+    position: 'absolute',
+    left: 20,
+  },
+  closeIcon: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 30,
+    padding: 20,
     alignItems: 'center',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  broadcastingText: {
+    fontSize: 16,
+    color: '#555',
+    marginBottom: 10,
+  },
+  progressBarContainer: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
     marginBottom: 20,
+  },
+  progressBar: {
+    width: '50%', // Placeholder value
+    height: '100%',
+    backgroundColor: '#1E3A8A',
+    borderRadius: 4,
+  },
+  infoText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 30,
     color: '#333',
   },
-  buttonContainer: {
+  timerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     width: '100%',
+    marginBottom: 50,
   },
-  optionButton: {
-    width: 150,
-    height: 150,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  },
-  cameraIconPlaceholder: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#4B5563',
-    borderRadius: 5,
-  },
-  folderIconPlaceholder: {
-    width: 80,
-    height: 80,
+  timerBox: {
     backgroundColor: '#F3F4F6',
-    borderRadius: 5,
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    width: '45%',
   },
-  broadcastButton: {
+  timerValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#1E3A8A',
+  },
+  timerLabel: {
+    fontSize: 14,
+    color: '#555',
+  },
+  stopButton: {
     backgroundColor: '#9CA3AF',
     paddingVertical: 15,
-    marginHorizontal: 20,
+    width: '80%',
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 20,
   },
-  broadcastButtonText: {
+  stopButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
