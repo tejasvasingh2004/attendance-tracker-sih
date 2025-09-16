@@ -86,96 +86,52 @@ function ProxyStudentCard({
 	}
 
 	return (
-		<View style={{
-			padding: 16,
-			backgroundColor: 'white',
-			borderWidth: 1,
-			borderColor: student.isRevoked ? '#fee2e2' : '#e5e7eb',
-			borderRadius: 8,
-			marginBottom: 16,
-			shadowColor: '#000',
-			shadowOffset: { width: 0, height: 1 },
-			shadowOpacity: 0.1,
-			shadowRadius: 2,
-			elevation: 2,
-			opacity: student.isRevoked ? 0.8 : 1
-		}}>
-			<View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+		<View className={`p-3 bg-white border rounded-lg mb-3 shadow-sm ${student.isRevoked ? 'border-red-100 opacity-80' : 'border-gray-200'}`}>
+			<View className="flex-row items-start">
 				<Image
 					source={{ uri: student.avatar }}
-					style={{ 
-						width: 48, 
-						height: 48, 
-						borderRadius: 24,
-						opacity: student.isRevoked ? 0.6 : 1
-					}}
+					className={`w-10 h-10 rounded-full flex-shrink-0 ${student.isRevoked ? 'opacity-60' : ''}`}
 					resizeMode="cover"
 				/>
-				<View style={{ flex: 1 }}>
-					<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-						<Text style={{ 
-							fontWeight: '500', 
-							color: student.isRevoked ? '#6b7280' : '#1f2937', 
-							fontSize: 16,
-							textDecorationLine: student.isRevoked ? 'line-through' : 'none'
-						}}>
+				<View className="flex-1 min-w-0 ml-2.5">
+					<View className="flex-row justify-between items-center">
+						<Text className={`text-sm font-medium flex-shrink truncate max-w-[70%] ${student.isRevoked ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
 							{student.name}
 						</Text>
 						{student.isRevoked && (
-							<View style={{
-								paddingHorizontal: 8,
-								paddingVertical: 2,
-								backgroundColor: '#fee2e2',
-								borderRadius: 4
-							}}>
-								<Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '500' }}>
+							<View className="px-1.5 py-0.5 bg-red-100 rounded flex-shrink-0 ml-1">
+								<Text className="text-xs font-medium text-red-600">
 									Revoked
 								</Text>
 							</View>
 						)}
 					</View>
-					<Text style={{ color: '#6b7280', fontSize: 14 }}>
+					<Text className="text-xs text-gray-500 mt-0.5">
 						ID: {student.id}
 					</Text>
 
 					{/* AI Detection Section */}
 					{hasAiDetection && (
-						<View style={{
-							marginTop: 12,
-							padding: 12,
-							backgroundColor: '#fef3c7',
-							borderRadius: 8,
-							borderWidth: 1,
-							borderColor: '#fde68a'
-						}}>
-							<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-								<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+						<View className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+							<View className="flex-row justify-between items-center mb-2">
+								<View className="flex-row items-center space-x-1.5">
 									<MaterialIcons name="warning" size={16} color={getConfidenceColor(student.aiDetection!.confidence)} />
-									<Text style={{ fontSize: 14, fontWeight: '600', color: '#92400e' }}>
+									<Text className="text-sm font-semibold text-amber-800">
 										AI Detection Alert
 									</Text>
 								</View>
-								<View style={{
-									paddingHorizontal: 8,
-									paddingVertical: 2,
-									backgroundColor: '#fff7ed',
-									borderRadius: 12
-								}}>
-									<Text style={{ 
-										color: getConfidenceColor(student.aiDetection!.confidence),
-										fontSize: 12,
-										fontWeight: '600'
-									}}>
+								<View className="px-2 py-0.5 bg-amber-50/80 rounded-full">
+									<Text className="text-xs font-semibold" style={{ color: getConfidenceColor(student.aiDetection!.confidence) }}>
 										{student.aiDetection!.confidence}% Confidence
 									</Text>
 								</View>
 							</View>
-							<Text style={{ fontSize: 14, color: '#92400e', marginBottom: 4 }}>
+							<Text className="text-sm text-amber-800 mb-1">
 								{student.aiDetection!.reason}
 							</Text>
-							<View style={{ gap: 2 }}>
+							<View className="space-y-0.5">
 								{student.aiDetection!.evidence.map((evidence, index) => (
-									<Text key={index} style={{ fontSize: 12, color: '#92400e', opacity: 0.8 }}>
+									<Text key={index} className="text-xs text-amber-800/80">
 										• {evidence}
 									</Text>
 								))}
@@ -184,55 +140,26 @@ function ProxyStudentCard({
 					)}
 
 					{/* Status Section */}
-					<View style={{ marginTop: 12 }}>
-						<View style={{
-							flexDirection: 'row',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							padding: 10,
-							backgroundColor: '#f9fafb',
-							borderRadius: 8
-						}}>
-							<View style={{ 
-								flexDirection: 'row', 
-								alignItems: 'center', 
-								gap: 6,
-								flex: 1,
-								marginRight: 8
-							}}>
+					<View className="mt-3">
+						<View className="flex-row items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+							<View className="flex-row items-center space-x-1.5 flex-shrink">
 								<MaterialIcons 
 									name={isUploaded ? "check-circle" : "error"} 
 									size={16} 
 									color={isUploaded ? '#16a34a' : '#dc2626'} 
 								/>
-								<Text style={{
-									fontSize: 13,
-									fontWeight: '600',
-									color: isUploaded ? '#16a34a' : '#dc2626'
-								}}>
+								<Text className={`text-xs font-semibold ${isUploaded ? 'text-green-600' : 'text-red-600'}`}>
 									{isUploaded ? 'Uploaded' : 'Not Uploaded'}
 								</Text>
 							</View>
-							<View style={{ flexDirection: 'row', gap: 6 }}>
+							<View className="flex-row flex-shrink-0 ml-2">
 								{isUploaded && !student.isRevoked && (
 									<TouchableOpacity
 										onPress={() => onShowImage(student)}
-										style={{
-											paddingHorizontal: 10,
-											paddingVertical: 6,
-											borderRadius: 6,
-											backgroundColor: '#137fec',
-											flexDirection: 'row',
-											alignItems: 'center',
-											gap: 4
-										}}
+										className="px-2 py-1.5 rounded-md bg-blue-600 flex-row items-center mr-2"
 									>
-										<MaterialIcons name="photo" size={16} color="white" />
-										<Text style={{
-											fontSize: 13,
-											fontWeight: '600',
-											color: 'white'
-										}}>
+										<MaterialIcons name="photo" size={14} color="white" />
+										<Text className="text-xs font-semibold text-white ml-1">
 											View
 										</Text>
 									</TouchableOpacity>
@@ -240,22 +167,10 @@ function ProxyStudentCard({
 								{!student.isRevoked && (
 									<TouchableOpacity
 										onPress={() => onRevoke(student)}
-										style={{
-											paddingHorizontal: 10,
-											paddingVertical: 6,
-											borderRadius: 6,
-											backgroundColor: '#fee2e2',
-											flexDirection: 'row',
-											alignItems: 'center',
-											gap: 4
-										}}
+										className="px-2 py-1.5 rounded-md bg-red-100 flex-row items-center"
 									>
-										<MaterialIcons name="block" size={16} color="#dc2626" />
-										<Text style={{
-											fontSize: 13,
-											fontWeight: '600',
-											color: '#dc2626'
-										}}>
+										<MaterialIcons name="block" size={14} color="#dc2626" />
+										<Text className="text-xs font-semibold text-red-600 ml-1">
 											Revoke
 										</Text>
 									</TouchableOpacity>
@@ -263,12 +178,7 @@ function ProxyStudentCard({
 							</View>
 						</View>
 						{isUploaded && student.uploadTime && (
-							<Text style={{
-								fontSize: 12,
-								color: '#6b7280',
-								marginTop: 4,
-								textAlign: 'right'
-							}}>
+							<Text className="text-xs text-gray-500 mt-1 text-right">
 								{student.uploadTime}
 							</Text>
 						)}
@@ -325,41 +235,30 @@ export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreen
 	const manuallyFlaggedStudents = students.filter(s => !s.aiDetection)
 
 	return (
-		<SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
-			<View style={{ flex: 1, backgroundColor: 'white' }}>
+		<SafeAreaView className="flex-1 bg-gray-50">
+			<View className="flex-1 bg-white">
 				{/* Header */}
-				<View style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-					padding: 16,
-					borderBottomWidth: 1,
-					borderBottomColor: '#e5e7eb'
-				}}>
+				<View className="flex-row items-center justify-between p-4 border-b border-gray-200">
 					<TouchableOpacity
 						onPress={onBack}
-						style={{
-							padding: 8,
-							borderRadius: 20,
-							backgroundColor: '#f3f4f6'
-						}}
+						className="p-2 rounded-full bg-gray-100"
 					>
 						<MaterialIcons name="arrow-back" size={24} color="#6b7280" />
 					</TouchableOpacity>
-					<View style={{ alignItems: 'center' }}>
-						<Text style={{ fontSize: 20, fontWeight: 'bold', color: '#111827' }}>
+					<View className="items-center">
+						<Text className="text-xl font-bold text-gray-900">
 							Proxy Review
 						</Text>
-						<Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280' }}>
+						<Text className="text-sm font-medium text-gray-500">
 							{session.title}
 						</Text>
 					</View>
-					<View style={{ width: 40, height: 40 }} />
+					<View className="w-10 h-10" />
 				</View>
 
 				<ScrollView 
-					style={{ flex: 1 }} 
-					contentContainerStyle={{ paddingBottom: 100 }}
+					className="flex-1"
+					contentContainerClassName="pb-24"
 					showsVerticalScrollIndicator={false}
 				>
 					<View style={{ padding: 16, paddingTop: 24 }}>
@@ -479,58 +378,23 @@ export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreen
 				</ScrollView>
 
 				{/* Bottom Navigation */}
-				<View style={{
-					backgroundColor: 'white',
-					borderTopWidth: 1,
-					borderTopColor: '#e5e7eb',
-					paddingTop: 8,
-					paddingBottom: 24,
-					shadowColor: '#000',
-					shadowOffset: { width: 0, height: -2 },
-					shadowOpacity: 0.05,
-					shadowRadius: 4,
-					elevation: 4
-				}}>
-					<View style={{
-						flexDirection: 'row',
-						justifyContent: 'space-around',
-						alignItems: 'center',
-						paddingHorizontal: 16
-					}}>
-						<TouchableOpacity style={{
-							flex: 1,
-							alignItems: 'center',
-							justifyContent: 'center',
-							paddingVertical: 8
-						}}>
+				<View className="bg-white border-t border-gray-200 pt-2 pb-6 shadow-lg">
+					<View className="flex-row justify-around items-center px-4">
+						<TouchableOpacity className="flex-1 items-center justify-center py-2">
 							<MaterialIcons name="home" size={24} color="#6b7280" />
-							<Text style={{ fontSize: 12, fontWeight: '500', color: '#6b7280', marginTop: 4 }}>
+							<Text className="text-xs font-medium text-gray-500 mt-1">
 								Home
 							</Text>
 						</TouchableOpacity>
-						<TouchableOpacity style={{
-							flex: 1,
-							alignItems: 'center',
-							justifyContent: 'center',
-							paddingVertical: 8,
-							marginHorizontal: 8,
-							backgroundColor: '#eff6ff',
-							borderRadius: 12,
-							paddingHorizontal: 16
-						}}>
+						<TouchableOpacity className="flex-1 items-center justify-center py-2 mx-2 bg-blue-50 rounded-xl px-4">
 							<MaterialIcons name="checklist" size={24} color="#137fec" />
-							<Text style={{ fontSize: 12, fontWeight: '500', color: '#137fec', marginTop: 4 }}>
+							<Text className="text-xs font-medium text-blue-600 mt-1">
 								Attendance
 							</Text>
 						</TouchableOpacity>
-						<TouchableOpacity style={{
-							flex: 1,
-							alignItems: 'center',
-							justifyContent: 'center',
-							paddingVertical: 8
-						}}>
+						<TouchableOpacity className="flex-1 items-center justify-center py-2">
 							<MaterialIcons name="person" size={24} color="#6b7280" />
-							<Text style={{ fontSize: 12, fontWeight: '500', color: '#6b7280', marginTop: 4 }}>
+							<Text className="text-xs font-medium text-gray-500 mt-1">
 								Profile
 							</Text>
 						</TouchableOpacity>
@@ -546,79 +410,27 @@ export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreen
 				onRequestClose={() => setShowImageModal(false)}
 				statusBarTranslucent
 			>
-				<View style={{
-					flex: 1,
-					backgroundColor: 'rgba(0,0,0,0.85)',
-					justifyContent: 'center',
-					alignItems: 'center',
-					padding: 20
-				}}>
-					<View style={{
-						backgroundColor: 'white',
-						borderRadius: 24,
-						padding: 24,
-						width: '100%',
-						maxWidth: 400,
-						alignItems: 'center',
-						shadowColor: '#000',
-						shadowOffset: { width: 0, height: 4 },
-						shadowOpacity: 0.2,
-						shadowRadius: 8,
-						elevation: 8
-					}}>
-						<View style={{ 
-							flexDirection: 'row', 
-							alignItems: 'center', 
-							gap: 8, 
-							marginBottom: 20 
-						}}>
+				<View className="flex-1 bg-black/85 justify-center items-center p-5">
+					<View className="w-full max-w-[400px] bg-white rounded-3xl p-6 items-center shadow-xl">
+						<View className="flex-row items-center gap-2 mb-5">
 							<MaterialIcons name="photo-camera" size={24} color="#1f2937" />
-							<Text style={{
-								fontSize: 20,
-								fontWeight: 'bold',
-								color: '#1f2937'
-							}}>
+							<Text className="text-xl font-bold text-gray-900">
 								{selectedStudent?.name}&apos;s Photo
 							</Text>
 						</View>
-						<View style={{
-							width: '100%',
-							aspectRatio: 4/3,
-							backgroundColor: '#f3f4f6',
-							borderRadius: 16,
-							justifyContent: 'center',
-							alignItems: 'center',
-							marginBottom: 24,
-							borderWidth: 1,
-							borderColor: '#e5e7eb',
-							overflow: 'hidden'
-						}}>
+						<View className="w-full aspect-[4/3] bg-gray-100 rounded-2xl justify-center items-center mb-6 border border-gray-200 overflow-hidden">
 							<MaterialIcons name="image" size={64} color="#9ca3af" />
-							<Text style={{ color: '#6b7280', fontSize: 14, marginTop: 12, fontWeight: '500' }}>
+							<Text className="text-sm font-medium text-gray-500 mt-3">
 								Photo Preview
 							</Text>
 						</View>
-						<View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+						<View className="flex-row gap-3 w-full">
 							<TouchableOpacity
 								onPress={() => setShowImageModal(false)}
-								style={{
-									flex: 1,
-									paddingVertical: 14,
-									paddingHorizontal: 20,
-									borderRadius: 12,
-									backgroundColor: '#f3f4f6',
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									gap: 8
-								}}
+								className="flex-1 py-3.5 px-5 rounded-xl bg-gray-100 flex-row items-center justify-center gap-2"
 							>
 								<MaterialIcons name="close" size={20} color="#6b7280" />
-								<Text style={{
-									color: '#6b7280',
-									fontWeight: '600',
-									fontSize: 16
-								}}>
+								<Text className="text-base font-semibold text-gray-500">
 									Close
 								</Text>
 							</TouchableOpacity>
@@ -627,24 +439,10 @@ export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreen
 									setShowImageModal(false)
 									handleRevoke(selectedStudent!)
 								}}
-								style={{
-									flex: 1,
-									paddingVertical: 14,
-									paddingHorizontal: 20,
-									borderRadius: 12,
-									backgroundColor: '#fee2e2',
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									gap: 8
-								}}
+								className="flex-1 py-3.5 px-5 rounded-xl bg-red-100 flex-row items-center justify-center gap-2"
 							>
 								<MaterialIcons name="block" size={20} color="#dc2626" />
-								<Text style={{
-									color: '#dc2626',
-									fontWeight: '600',
-									fontSize: 16
-								}}>
+								<Text className="text-base font-semibold text-red-600">
 									Revoke
 								</Text>
 							</TouchableOpacity>
@@ -661,134 +459,51 @@ export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreen
 				onRequestClose={() => setShowRevokeModal(false)}
 				statusBarTranslucent
 			>
-				<View style={{
-					flex: 1,
-					backgroundColor: 'rgba(0,0,0,0.85)',
-					justifyContent: 'center',
-					alignItems: 'center',
-					padding: 20
-				}}>
-					<View style={{
-						backgroundColor: 'white',
-						borderRadius: 24,
-						padding: 24,
-						width: '100%',
-						maxWidth: 400,
-						shadowColor: '#000',
-						shadowOffset: { width: 0, height: 4 },
-						shadowOpacity: 0.2,
-						shadowRadius: 8,
-						elevation: 8
-					}}>
-						<View style={{ alignItems: 'center', marginBottom: 20 }}>
-							<View style={{
-								width: 72,
-								height: 72,
-								borderRadius: 36,
-								backgroundColor: '#fee2e2',
-								justifyContent: 'center',
-								alignItems: 'center',
-								marginBottom: 20,
-								shadowColor: '#dc2626',
-								shadowOffset: { width: 0, height: 2 },
-								shadowOpacity: 0.1,
-								shadowRadius: 4,
-								elevation: 2
-							}}>
+				<View className="flex-1 bg-black/85 justify-center items-center p-5">
+					<View className="w-full max-w-[400px] bg-white rounded-3xl p-6 shadow-xl">
+						<View className="items-center mb-5">
+							<View className="w-[72px] h-[72px] rounded-full bg-red-100 justify-center items-center mb-5 shadow-sm shadow-red-600">
 								<MaterialIcons name="warning" size={36} color="#dc2626" />
 							</View>
-							<Text style={{
-								fontSize: 24,
-								fontWeight: 'bold',
-								color: '#1f2937',
-								marginBottom: 12,
-								textAlign: 'center'
-							}}>
+							<Text className="text-2xl font-bold text-gray-900 mb-3 text-center">
 								Revoke Attendance?
 							</Text>
-							<Text style={{
-								color: '#6b7280',
-								textAlign: 'center',
-								marginBottom: 8,
-								fontSize: 16,
-								lineHeight: 24
-							}}>
+							<Text className="text-gray-500 text-center mb-2 text-base leading-6">
 								Are you sure you want to revoke attendance for:
 							</Text>
-							<Text style={{
-								fontSize: 18,
-								fontWeight: '600',
-								color: '#1f2937',
-								marginBottom: 16
-							}}>
+							<Text className="text-lg font-semibold text-gray-900 mb-4">
 								{selectedStudent?.name}
 							</Text>
 							{selectedStudent?.aiDetection && (
-								<View style={{
-									backgroundColor: '#fef3c7',
-									padding: 16,
-									borderRadius: 12,
-									marginBottom: 16,
-									width: '100%',
-									borderWidth: 1,
-									borderColor: '#fde68a'
-								}}>
-									<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+								<View className="bg-amber-50 p-4 rounded-xl mb-4 w-full border border-amber-200">
+									<View className="flex-row items-center gap-2 mb-2">
 										<MaterialIcons name="auto-awesome" size={20} color="#92400e" />
-										<Text style={{ color: '#92400e', fontWeight: '600', fontSize: 16 }}>
+										<Text className="text-amber-800 font-semibold text-base">
 											AI Detection Result
 										</Text>
 									</View>
-									<Text style={{ color: '#92400e', fontSize: 15, lineHeight: 22 }}>
+									<Text className="text-amber-800 text-[15px] leading-[22px]">
 										{selectedStudent.aiDetection.reason}
 									</Text>
 								</View>
 							)}
 						</View>
-						<View style={{ flexDirection: 'row', gap: 12 }}>
+						<View className="flex-row gap-3">
 							<TouchableOpacity
 								onPress={() => setShowRevokeModal(false)}
-								style={{
-									flex: 1,
-									paddingVertical: 14,
-									paddingHorizontal: 20,
-									borderRadius: 12,
-									backgroundColor: '#f3f4f6',
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									gap: 8
-								}}
+								className="flex-1 py-3.5 px-5 rounded-xl bg-gray-100 flex-row items-center justify-center gap-2"
 							>
 								<MaterialIcons name="close" size={20} color="#6b7280" />
-								<Text style={{
-									color: '#6b7280',
-									fontWeight: '600',
-									fontSize: 16
-								}}>
+								<Text className="text-base font-semibold text-gray-500">
 									Cancel
 								</Text>
 							</TouchableOpacity>
 							<TouchableOpacity
 								onPress={confirmRevoke}
-								style={{
-									flex: 1,
-									paddingVertical: 14,
-									paddingHorizontal: 20,
-									borderRadius: 12,
-									backgroundColor: '#dc2626',
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'center',
-									gap: 8
-								}}
+								className="flex-1 py-3.5 px-5 rounded-xl bg-red-600 flex-row items-center justify-center gap-2"
 							>
 								<MaterialIcons name="block" size={20} color="white" />
-								<Text style={{
-									color: 'white',
-									fontWeight: '600',
-									fontSize: 16
-								}}>
+								<Text className="text-base font-semibold text-white">
 									Revoke
 								</Text>
 							</TouchableOpacity>
