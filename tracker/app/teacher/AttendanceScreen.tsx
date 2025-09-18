@@ -12,21 +12,20 @@ type Student = {
 
 // These are the students who are actually present in the classroom (detected from image)
 const PRESENT_STUDENTS: Student[] = [
-	{ id: '12345', name: 'Amanda Smith', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
-	{ id: '12347', name: 'Emily White', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' },
-	{ id: '12349', name: 'Jessica Jones', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT32ITd0o5gGkuUQcNwFS6JJxbdu1tqQeEGhhYqgJCtuvM4gmUsvFOKa8YO-2SWL17pgPAO0_dzQPFccFO5ngHbmEQ3vlrqOn69jWvd8V8isP6JYJLB-wsOZ58fb1dcqzGLJW9firFh4SKJyTNSq-V6lcwaDip8YiVk7xnU4VuO7-6JoMwjaO2v6Ad8j8VcFMN_hNb3hKqOqxq3yF_yGvbgB_Ri7YVQ0bwJReTyc7J1zTMe3KBbcEgs3G4Phmz8t6dfRGPJc4OSXr3' },
-	{ id: '12351', name: 'Sarah Johnson', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVvIpAyzAmZe3IJyzPGGAh9wKs1rn_DvlUWzbcL_Rr8z-S674znoUdg2Z3-_BiG0Azl3mkmoGm9WYd652KvL7mlWVYi3Bi3i6Tti5ye1pXh63VHzumrqCzmB_KobUFD5YtAuZZLXbBSWOyX8NZQQcPbBGno3fJ1h5konUsutidpIukEoa0IEauLvFCTyyqb_UBXL_jE7mdJmByfCrKwwZ5X50rQ5r5KNKgeh6zdWrF9cMDY__gGe1pHbCi9DeSJWv1OLIGpKNKOEp_' },
-	{ id: '12353', name: 'Lisa Anderson', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbAMwrsp_vMpBxoc2WWirf3ScRPclZhsggapVZ9izsHZM_2odk3SAsrnV9nxQHZy2NALDTqeUYqy2AB0Vxj2Z_JKiEvXJbmDrG5YP6fAyKFvBD8tySQ359pf7CzSqewyMPOSYRKFm8yKuIVC42nkldP65SN_Am74pUoCCb__V4XFmB265Qhp4fokivVgPCRsDKqAGGbO2v3ji0JfEJ6d_EUzou9N2l3ef8RJh99mPuimrNz9_qsWV1wdrKgeJYuWl0lyjkG2ngy3Ud' },
-	{ id: '12355', name: 'Alex Thompson', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
-	{ id: '12357', name: 'Michael Brown', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' },
-	{ id: '12358', name: 'David Wilson', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT32ITd0o5gGkuUQcNwFS6JJxbdu1tqQeEGhhYqgJCtuvM4gmUsvFOKa8YO-2SWL17pgPAO0_dzQPFccFO5ngHbmEQ3vlrqOn69jWvd8V8isP6JYJLB-wsOZ58fb1dcqzGLJW9firFh4SKJyTNSq-V6lcwaDip8YiVk7xnU4VuO7-6JoMwjaO2v6Ad8j8VcFMN_hNb3hKqOqxq3yF_yGvbgB_Ri7YVQ0bwJReTyc7J1zTMe3KBbcEgs3G4Phmz8t6dfRGPJc4OSXr3' },
-	{ id: '12359', name: 'Rachel Green', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVvIpAyzAmZe3IJyzPGGAh9wKs1rn_DvlUWzbcL_Rr8z-S674znoUdg2Z3-_BiG0Azl3mkmoGm9WYd652KvL7mlWVYi3Bi3i6Tti5ye1pXh63VHzumrqCzmB_KobUFD5YtAuZZLXbBSWOyX8NZQQcPbBGno3fJ1h5konUsutidpIukEoa0IEauLvFCTyyqb_UBXL_jE7mdJmByfCrKwwZ5X50rQ5r5KNKgeh6zdWrF9cMDY__gGe1pHbCi9DeSJWv1OLIGpKNKOEp_' },
-	{ id: '12360', name: 'John Miller', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbAMwrsp_vMpBxoc2WWirf3ScRPclZhsggapVZ9izsHZM_2odk3SAsrnV9nxQHZy2NALDTqeUYqy2AB0Vxj2Z_JKiEvXJbmDrG5YP6fAyKFvBD8tySQ359pf7CzSqewyMPOSYRKFm8yKuIVC42nkldP65SN_Am74pUoCCb__V4XFmB265Qhp4fokivVgPCRsDKqAGGbO2v3ji0JfEJ6d_EUzou9N2l3ef8RJh99mPuimrNz9_qsWV1wdrKgeJYuWl0lyjkG2ngy3Ud' },
-	{ id: '12361', name: 'Emma Davis', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
-	{ id: '12362', name: 'Sophie Taylor', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' }
+	{ id: '12345', name: 'Aisha', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
+	{ id: '12347', name: 'Aarav', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' },
+	{ id: '12349', name: 'Vihaan', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT32ITd0o5gGkuUQcNwFS6JJxbdu1tqQeEGhhYqgJCtuvM4gmUsvFOKa8YO-2SWL17pgPAO0_dzQPFccFO5ngHbmEQ3vlrqOn69jWvd8V8isP6JYJLB-wsOZ58fb1dcqzGLJW9firFh4SKJyTNSq-V6lcwaDip8YiVk7xnU4VuO7-6JoMwjaO2v6Ad8j8VcFMN_hNb3hKqOqxq3yF_yGvbgB_Ri7YVQ0bwJReTyc7J1zTMe3KBbcEgs3G4Phmz8t6dfRGPJc4OSXr3' },
+	{ id: '12351', name: 'Sahil', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVvIpAyzAmZe3IJyzPGGAh9wKs1rn_DvlUWzbcL_Rr8z-S674znoUdg2Z3-_BiG0Azl3mkmoGm9WYd652KvL7mlWVYi3Bi3i6Tti5ye1pXh63VHzumrqCzmB_KobUFD5YtAuZZLXbBSWOyX8NZQQcPbBGno3fJ1h5konUsutidpIukEoa0IEauLvFCTyyqb_UBXL_jE7mdJmByfCrKwwZ5X50rQ5r5KNKgeh6zdWrF9cMDY__gGe1pHbCi9DeSJWv1OLIGpKNKOEp_' },
+	{ id: '12353', name: 'Advait', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbAMwrsp_vMpBxoc2WWirf3ScRPclZhsggapVZ9izsHZM_2odk3SAsrnV9nxQHZy2NALDTqeUYqy2AB0Vxj2Z_JKiEvXJbmDrG5YP6fAyKFvBD8tySQ359pf7CzSqewyMPOSYRKFm8yKuIVC42nkldP65SN_Am74pUoCCb__V4XFmB265Qhp4fokivVgPCRsDKqAGGbO2v3ji0JfEJ6d_EUzou9N2l3ef8RJh99mPuimrNz9_qsWV1wdrKgeJYuWl0lyjkG2ngy3Ud' },
+	{ id: '12355', name: 'Ishaan', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
+	{ id: '12357', name: 'Riya', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' },
+	{ id: '12358', name: 'Kabir', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAT32ITd0o5gGkuUQcNwFS6JJxbdu1tqQeEGhhYqgJCtuvM4gmUsvFOKa8YO-2SWL17pgPAO0_dzQPFccFO5ngHbmEQ3vlrqOn69jWvd8V8isP6JYJLB-wsOZ58fb1dcqzGLJW9firFh4SKJyTNSq-V6lcwaDip8YiVk7xnU4VuO7-6JoMwjaO2v6Ad8j8VcFMN_hNb3hKqOqxq3yF_yGvbgB_Ri7YVQ0bwJReTyc7J1zTMe3KBbcEgs3G4Phmz8t6dfRGPJc4OSXr3' },
+	{ id: '12359', name: 'Ananya', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVvIpAyzAmZe3IJyzPGGAh9wKs1rn_DvlUWzbcL_Rr8z-S674znoUdg2Z3-_BiG0Azl3mkmoGm9WYd652KvL7mlWVYi3Bi3i6Tti5ye1pXh63VHzumrqCzmB_KobUFD5YtAuZZLXbBSWOyX8NZQQcPbBGno3fJ1h5konUsutidpIukEoa0IEauLvFCTyyqb_UBXL_jE7mdJmByfCrKwwZ5X50rQ5r5KNKgeh6zdWrF9cMDY__gGe1pHbCi9DeSJWv1OLIGpKNKOEp_' },
+	{ id: '12360', name: 'Dev', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbAMwrsp_vMpBxoc2WWirf3ScRPclZhsggapVZ9izsHZM_2odk3SAsrnV9nxQHZy2NALDTqeUYqy2AB0Vxj2Z_JKiEvXJbmDrG5YP6fAyKFvBD8tySQ359pf7CzSqewyMPOSYRKFm8yKuIVC42nkldP65SN_Am74pUoCCb__V4XFmB265Qhp4fokivVgPCRsDKqAGGbO2v3ji0JfEJ6d_EUzou9N2l3ef8RJh99mPuimrNz9_qsWV1wdrKgeJYuWl0lyjkG2ngy3Ud' },
+	{ id: '12361', name: 'Divy', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB6lAu2dwzz-euQ8r7bJdu_1jcKYlHECdJSsc73vRdBwdHl-txCqh9LtFN5PsjPKUb73qNZyBAtqYHNu_2OCDH6CW0iueA08O_jrdLy97SMzoaR66YxCY-Y0WFKwrSv4E4XpaGzr-_mLQ9GdYuyL49_NfNJakp3bdJJ4gHabnz3LN6Z7SxOGIS57tyKFYlLEHYPVPE7PxdNspSa2cuO-vKv8MbIagbnsN4O2r-K7dVg19xpSv4qX-zbTmHW1P-_WIQNkCSoBFabtZbV' },
+	{ id: '12362', name: 'Sudhanshu', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYpQ6mQo-qYbZ24NgbsC40ph9cpoCExU_dm6PVaOZkjIXfw5s0J2aa8Hc3XzcU27I852L97E8-H-3I9Srguzodf8qmnkHzdPI5lQWml_9vYYWl-sz-EoUrCVROoBWoWnV9EPi4BZB_1wMvF198B9-8kYK9rjwaZXI3PSbx86A5TAwWvP6c5ZXRNnH4ZkivnosRGq0Xm9gQGu8kIl9YPr-8ewb21vw4-zgEdyIPA7bIehPZ6uavxGKScJvUeagjeaCZ3JlLptEdO_KK' }
 ]
 
-// Expected headcount from photo analysis in PhotoUploadScreen
 const EXPECTED_HEADCOUNT = 10 // Matches the detected headcount from image analysis
 
 function StudentCard({ student, onRemove }: { student: Student; onRemove: (studentId: string) => void }) {
@@ -143,7 +142,6 @@ export default function AttendanceScreen({ session, onBack }: AttendanceScreenPr
 	const pulseAnim = React.useRef(new Animated.Value(1)).current
 
 	React.useEffect(() => {
-		// Start broadcasting animation
 		const pulse = Animated.loop(
 			Animated.sequence([
 				Animated.timing(pulseAnim, {
@@ -160,14 +158,11 @@ export default function AttendanceScreen({ session, onBack }: AttendanceScreenPr
 		)
 		pulse.start()
 
-		// Add students with realistic delays
 		const addStudentWithDelay = (student: Student, delay: number) => {
 			setTimeout(() => {
 				setVisibleStudents(prev => {
 					const newStudents = [...prev, student]
-					// Check if we've exceeded the expected headcount
 					if (newStudents.length > EXPECTED_HEADCOUNT) {
-						// Stop broadcasting and show proxy alert
 						setShowBroadcasting(false)
 						setShowProxyAlert(true)
 					}
@@ -176,16 +171,14 @@ export default function AttendanceScreen({ session, onBack }: AttendanceScreenPr
 			}, delay)
 		}
 
-		// Add students at different intervals (2-8 seconds apart)
 		PRESENT_STUDENTS.forEach((student, index) => {
-			const delay = 2000 + (index * 3000) + Math.random() * 2000 // 2-8 seconds between each
+			const delay = 2000 + (index * 3000) + Math.random() * 2000 
 			addStudentWithDelay(student, delay)
 		})
 
-		// Hide broadcasting after 20 seconds if no proxy alert triggered
 		const timer = setTimeout(() => {
 			setShowBroadcasting(false)
-		}, 20000) // 20 seconds
+		}, 20000)
 
 		return () => {
 			clearTimeout(timer)
