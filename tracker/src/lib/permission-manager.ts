@@ -1,0 +1,207 @@
+import { Platform, PermissionsAndroid, Permission } from 'react-native';
+
+// Permission Types
+export interface PermissionResult {
+  granted: boolean;
+  deniedPermissions: string[];
+}
+
+export interface PermissionGroup {
+  name: string;
+  permissions: string[];
+}
+
+export const PERMISSION_GROUPS = {
+  BLUETOOTH: {
+    name: 'Bluetooth',
+    permissions: [
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_ADVERTISE,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+    ].filter(Boolean),
+  },
+  LOCATION: {
+    name: 'Location',
+    permissions: [
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+    ].filter(Boolean),
+  },
+  STORAGE: {
+    name: 'Storage',
+    permissions: [
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+    ].filter(Boolean),
+  },
+} as const;
+
+// Permission Manager Class
+export class PermissionManager {
+  private static instance: PermissionManager;
+
+  private constructor() {}
+
+  public static getInstance(): PermissionManager {
+    if (!PermissionManager.instance) {
+      PermissionManager.instance = new PermissionManager();
+    }
+    return PermissionManager.instance;
+  }
+
+  /**
+   * Request permissions for a specific group
+   */
+  public async requestPermissionGroup(group: PermissionGroup): Promise<PermissionResult> {
+    if (Platform.OS !== 'android') {
+      return { granted: true, deniedPermissions: [] };
+    }
+
+    try {
+      const results = await PermissionsAndroid.requestMultiple(
+        group.permissions as Permission[]
+      );
+      
+      const deniedPermissions = Object.entries(results)
+        .filter(([_, status]) => status !== 'granted')
+        .map(([permission]) => permission);
+
+      return {
+        granted: deniedPermissions.length === 0,
+        deniedPermissions,
+      };
+    } catch (error) {
+      throw new Error(`Failed to request ${group.name} permissions: ${error}`);
+    }
+  }
+
+  /**
+   * Check if permissions for a specific group are granted
+   */
+  public async checkPermissionGroup(group: PermissionGroup): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
+    try {
+      const results = await Promise.all(
+        group.permissions.map(permission => 
+          PermissionsAndroid.check(permission as Permission)
+        )
+      );
+      
+      return results.every(status => status === true);
+    } catch (error) {
+      console.error(`Error checking ${group.name} permissions:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Request individual permissions
+   */
+  public async requestPermissions(permissions: string[]): Promise<PermissionResult> {
+    if (Platform.OS !== 'android') {
+      return { granted: true, deniedPermissions: [] };
+    }
+
+    try {
+      const results = await PermissionsAndroid.requestMultiple(
+        permissions as Permission[]
+      );
+      
+      const deniedPermissions = Object.entries(results)
+        .filter(([_, status]) => status !== 'granted')
+        .map(([permission]) => permission);
+
+      return {
+        granted: deniedPermissions.length === 0,
+        deniedPermissions,
+      };
+    } catch (error) {
+      throw new Error(`Failed to request permissions: ${error}`);
+    }
+  }
+
+  /**
+   * Check individual permissions
+   */
+  public async checkPermissions(permissions: string[]): Promise<boolean> {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
+    try {
+      const results = await Promise.all(
+        permissions.map(permission => 
+          PermissionsAndroid.check(permission as Permission)
+        )
+      );
+      
+      return results.every(status => status === true);
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * BLE-specific permission methods
+   */
+  public async requestBLEPermissions(): Promise<void> {
+    const result = await this.requestPermissionGroup(PERMISSION_GROUPS.BLUETOOTH);
+    if (!result.granted) {
+      throw new Error(`Bluetooth permissions denied: ${result.deniedPermissions.join(', ')}`);
+    }
+  }
+
+  public async checkBLEPermissions(): Promise<boolean> {
+    return this.checkPermissionGroup(PERMISSION_GROUPS.BLUETOOTH);
+  }
+
+  /**
+   * Location-specific permission methods
+   */
+  public async requestLocationPermissions(): Promise<void> {
+    const result = await this.requestPermissionGroup(PERMISSION_GROUPS.LOCATION);
+    if (!result.granted) {
+      throw new Error(`Location permissions denied: ${result.deniedPermissions.join(', ')}`);
+    }
+  }
+
+  public async checkLocationPermissions(): Promise<boolean> {
+    return this.checkPermissionGroup(PERMISSION_GROUPS.LOCATION);
+  }
+
+  /**
+   * Storage-specific permission methods
+   */
+  public async requestStoragePermissions(): Promise<void> {
+    const result = await this.requestPermissionGroup(PERMISSION_GROUPS.STORAGE);
+    if (!result.granted) {
+      throw new Error(`Storage permissions denied: ${result.deniedPermissions.join(', ')}`);
+    }
+  }
+
+  public async checkStoragePermissions(): Promise<boolean> {
+    return this.checkPermissionGroup(PERMISSION_GROUPS.STORAGE);
+  }
+
+  /**
+   * Get all available permission groups
+   */
+  public getAvailablePermissionGroups(): PermissionGroup[] {
+    return Object.values(PERMISSION_GROUPS);
+  }
+
+  /**
+   * Check if running on Android (where permissions are required)
+   */
+  public isAndroid(): boolean {
+    return Platform.OS === 'android';
+  }
+}
+
+// Export default instance
+export default PermissionManager.getInstance();
