@@ -193,6 +193,24 @@ export default function Temp() {
     }
   }, []);
 
+  const onTestBasicAdvertising = useCallback(async () => {
+    try {
+      setScanMessages(prev => [...prev, '🧪 Testing basic advertising with manufacturer data...']);
+      
+      await BLE.testBasicAdvertising();
+      
+      setScanMessages(prev => [...prev, '✅ Basic advertising test completed successfully']);
+      Alert.alert(
+        'Test Complete', 
+        'Basic advertising test completed!\n\nPayload: ID=123, Name="sahil"\n\nThis test broadcasts the payload using manufacturer data for 1 second.'
+      );
+    } catch (err) {
+      console.error('Test basic advertising error:', err);
+      setScanMessages(prev => [...prev, `❌ Basic advertising test failed: ${err}`]);
+      Alert.alert('Test Failed', 'Basic advertising test failed. Check console for details.');
+    }
+  }, []);
+
   return (
     <View style={styles.wrapper}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={true}>
@@ -249,6 +267,9 @@ export default function Temp() {
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, styles.stop]} onPress={onStop}>
           <Text style={styles.buttonText}>Stop Advertise</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.testButton]} onPress={onTestBasicAdvertising}>
+          <Text style={styles.buttonText}>Test Basic Advertising (ID: 123, Name: sahil)</Text>
         </TouchableOpacity>
       </View>
 
@@ -365,6 +386,7 @@ const styles = StyleSheet.create({
   scan: { backgroundColor: '#28a745' },
   permissionButton: { backgroundColor: '#ff9500' },
   libraryButton: { backgroundColor: '#9c27b0' },
+  testButton: { backgroundColor: '#17a2b8' },
   buttonText: {
     color: 'white',
     fontSize: 16,

@@ -4,10 +4,8 @@ import { BleManager, State } from 'react-native-ble-plx';
 import PermissionManager from './permission-manager';
 import { Buffer } from 'buffer';
 
-// Constants
 const SERVICE_UID = '0000feed-0000-1000-8000-00805f9b34fb';
 
-// Types
 export interface BLEPayload {
   id: number;
   name?: string;
@@ -49,25 +47,6 @@ function makePayloadBytes(payload: BLEPayload): number[] {
   return idBytes;
 }
 
-// Pack up to 12 bytes into the UUID's last bytes
-function packIntoUuid(baseUuid: string, bytes: number[]): string {
-  // baseUuid like '0000feed-0000-1000-8000-00805f9b34fb'
-  // UUID format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-  // We'll replace the last 12 hex chars (6 bytes) with our payload
-  const hex = Buffer.from(bytes).toString('hex').padEnd(12, '0').slice(0, 12);
-  return baseUuid.slice(0, 24) + hex;
-}
-
-// Unpack bytes from UUID's last bytes
-function unpackFromUuid(packedUuid: string): number[] {
-  // Extract the last 12 hex characters (6 bytes) from the UUID
-  const hex = packedUuid.slice(-12);
-  const bytes: number[] = [];
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes.push(parseInt(hex.substr(i, 2), 16));
-  }
-  return bytes;
-}
 /*eslint-enable no-bitwise */
 
 function validatePayload(payload: BLEPayload): void {
@@ -79,70 +58,6 @@ function validatePayload(payload: BLEPayload): void {
   }
 }
 
-function bytesToBase64(bytes: number[]): string {
-  if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
-    return Buffer.from(bytes).toString('base64');
-  }
-  try {
-    let binary = '';
-    for (let i = 0; i < bytes.length; i++)
-      binary += String.fromCharCode(bytes[i]);
-    if (typeof btoa === 'function') return btoa(binary);
-  } catch (e) {}
-  throw new Error('No base64 encoder available in this environment');
-}
-
-function base64ToBytes(b64: string): number[] {
-  // Prefer Buffer if available
-  // @ts-ignore
-  if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
-    // @ts-ignore
-    return Array.from(Buffer.from(b64, 'base64'));
-  }
-  try {
-    // @ts-ignore
-    const binary = typeof atob === 'function' ? atob(b64) : null;
-    if (binary === null) throw new Error('No base64 decoder');
-    const bytes: number[] = [];
-    for (let i = 0; i < binary.length; i++) bytes.push(binary.charCodeAt(i));
-    return bytes;
-  } catch (e) {
-    throw new Error('No base64 decoder available in this environment');
-  }
-}
-
-/**
- * Accepts manufacturerData strings (hex or base64) and returns byte array.
- * react-native-ble-plx often provides base64-encoded manufacturerData.
- */
-function encodeStringToBytes(data: string): number[] {
-  if (!data) return [];
-  const cleanHex = data.replace(/[^0-9A-Fa-f]/g, '');
-  // If string looks like hex and has even length, parse as hex
-  if (
-    cleanHex.length > 0 &&
-    cleanHex.length % 2 === 0 &&
-    /^[0-9A-Fa-f]+$/.test(cleanHex)
-  ) {
-    const bytes: number[] = [];
-    for (let i = 0; i < cleanHex.length; i += 2) {
-      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
-    }
-    return bytes;
-  }
-  // Otherwise, try base64 decode
-  try {
-    return base64ToBytes(data);
-  } catch (e) {
-    // last resort: try direct hex parse (len could be odd)
-    const fallback: number[] = [];
-    for (let i = 0; i < data.length; i++) {
-      // eslint-disable-next-line no-bitwise
-      fallback.push(data.charCodeAt(i) & 0xff);
-    }
-    return fallback;
-  }
-}
 
 /* ===== BLE Class ===== */
 export class BLE {
@@ -167,39 +82,48 @@ export class BLE {
     if (!this.bleManager) {
       try {
         console.log('BLE: Creating BleManager...');
-        
+
         // Check if BleManager is available
         if (!BleManager) {
-          throw new Error('BleManager is not available. Please check if react-native-ble-plx is properly installed.');
+          throw new Error(
+            'BleManager is not available. Please check if react-native-ble-plx is properly installed.',
+          );
         }
-        
+
         this.bleManager = new BleManager();
         console.log('BLE: BleManager created successfully');
-        
+
         // Test if the manager is actually working
         try {
           const state = await this.bleManager.state();
           console.log('BLE: Manager state check successful:', state);
         } catch (stateError) {
           console.error('BLE: Manager state check failed:', stateError);
-          throw new Error('BLE manager created but not functional. Please restart the app.');
+          throw new Error(
+            'BLE manager created but not functional. Please restart the app.',
+          );
         }
-        
       } catch (error) {
         console.error('BLE: Failed to create BleManager:', error);
         this.bleManager = null; // Reset to null so we can try again
-        
+
         // Provide more specific error messages
         if (error instanceof Error) {
           if (error.message.includes('BleManager is not available')) {
-            throw new Error('BLE library not properly installed. Please reinstall react-native-ble-plx and rebuild the app.');
+            throw new Error(
+              'BLE library not properly installed. Please reinstall react-native-ble-plx and rebuild the app.',
+            );
           } else if (error.message.includes('not functional')) {
-            throw new Error('BLE manager not working properly. Please restart the app and try again.');
+            throw new Error(
+              'BLE manager not working properly. Please restart the app and try again.',
+            );
           } else {
             throw new Error(`BLE initialization failed: ${error.message}`);
           }
         } else {
-          throw new Error('Failed to create BLE manager. Please ensure BLE is supported on this device.');
+          throw new Error(
+            'Failed to create BLE manager. Please ensure BLE is supported on this device.',
+          );
         }
       }
     }
@@ -210,31 +134,30 @@ export class BLE {
     return Platform.OS === 'android' && !!BLEAdvertiser;
   }
 
-  public async checkBLELibrary(): Promise<{available: boolean, error?: string}> {
+  public async checkBLELibrary(): Promise<{
+    available: boolean;
+    error?: string;
+  }> {
     try {
       console.log('BLE: Checking BLE library availability...');
-      
-      // Check if BleManager is available
+
       if (!BleManager) {
         return { available: false, error: 'BleManager not available' };
       }
-      
-      // Try to create a BleManager instance
+
       const testManager = new BleManager();
-      
-      // Try to get state to verify it's working
+
       const state = await testManager.state();
       console.log('BLE: Library check successful, state:', state);
-      
-      // Clean up test manager
+
       testManager.destroy();
-      
+
       return { available: true };
     } catch (error) {
       console.error('BLE: Library check failed:', error);
-      return { 
-        available: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        available: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -260,7 +183,6 @@ export class BLE {
 
   public async startAdvertising(
     payload: BLEPayload,
-    options: BLEAdvertisingOptions = {},
   ): Promise<void> {
     validatePayload(payload);
     if (this.isAdvertising)
@@ -272,27 +194,33 @@ export class BLE {
       console.log('BLE: BLE permissions granted');
     } catch (error) {
       console.error('BLE: BLE permissions denied:', error);
-      throw new Error('Bluetooth permissions are required to start advertising. Please grant permissions and try again.');
+      throw new Error(
+        'Bluetooth permissions are required to start advertising. Please grant permissions and try again.',
+      );
     }
 
     (BLEAdvertiser as typeof BLEAdvertiser).setCompanyId(0xffff);
 
     const payloadBytes = makePayloadBytes(payload);
-    const serviceUid = options.serviceUid ?? SERVICE_UID;
+    const serviceUid = SERVICE_UID;
 
-    // Pack payload bytes into UUID
-    const packedUuid = packIntoUuid(serviceUid, payloadBytes.slice(0, 12));
-
-    console.log('BLE: Advertising with packed UUID:', {
-      originalUuid: serviceUid,
-      packedUuid,
-      payloadBytes: payloadBytes.slice(0, 12),
+    console.log('BLE: Advertising with manufacturer data:', {
+      serviceUuid: serviceUid,
+      manufacturerData: payloadBytes,
+      payload: payload,
     });
 
     try {
+      console.log('BLE: About to broadcast with:', {
+        serviceUuid: serviceUid,
+        manufacturerData: payloadBytes,
+        payloadBytesLength: payloadBytes.length,
+        payloadBytesHex: payloadBytes.map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
+      
       const result = await (BLEAdvertiser as typeof BLEAdvertiser).broadcast(
-        packedUuid,
-        [],
+        serviceUid,
+        payloadBytes, // Use manufacturer data instead of packed UUID
         {
           txPowerLevel: 0,
           includeDeviceName: false,
@@ -304,7 +232,7 @@ export class BLE {
       this.isAdvertising = true;
       this.currentPayload = payload;
       console.log(
-        `BLE: Started advertising packed UUID for payload [${payload.id}]`,
+        `BLE: Started advertising manufacturer data for payload [${payload.id}]`,
       );
     } catch (error) {
       console.error('BLE: Failed to start advertising:', error);
@@ -337,66 +265,76 @@ export class BLE {
     expectedPayload: BLEPayload,
   ): boolean {
     try {
-      // Check if device has our packed UUID and verify the payload
-      if (!deviceData.serviceUUIDs) {
-        console.log('BLE: Device has no service UUIDs');
+      // Check if device has our service UUID and manufacturer data
+      if (!deviceData.serviceUUIDs || !deviceData.serviceUUIDs.includes(SERVICE_UID)) {
+        console.log('BLE: Device does not have our service UUID');
         return false;
       }
 
-      for (const uuid of deviceData.serviceUUIDs) {
-        if (uuid.startsWith(SERVICE_UID.slice(0, 24))) {
-          console.log('BLE: Found packed UUID:', uuid);
-          try {
-            // Unpack the payload from the UUID
-            const unpackedBytes = unpackFromUuid(uuid);
-            if (unpackedBytes.length >= 4) {
-              // eslint-disable-next-line no-bitwise
-              const id =
-                (unpackedBytes[0] << 24) |
-                (unpackedBytes[1] << 16) |
-                (unpackedBytes[2] << 8) |
-                unpackedBytes[3];
+      if (!deviceData.manufacturerData) {
+        console.log('BLE: Device has our service UUID but no manufacturer data');
+        return false;
+      }
 
-              // Extract name if present
-              let name: string | undefined;
-              if (unpackedBytes.length > 4) {
-                const nameBytes = unpackedBytes.slice(4);
-                name = Buffer.from(nameBytes).toString('utf8');
-              }
+      try {
+        // Convert manufacturer data to bytes
+        let manufacturerBytes: number[];
+        if (Array.isArray(deviceData.manufacturerData)) {
+          manufacturerBytes = deviceData.manufacturerData.map(b =>
+            typeof b === 'string' ? parseInt(b, 16) : b,
+          );
+        } else {
+          manufacturerBytes = Object.values(deviceData.manufacturerData).map(b =>
+            typeof b === 'string' ? parseInt(b, 16) : Number(b),
+          );
+        }
 
-              const decodedPayload = { id, name };
+        if (manufacturerBytes.length >= 4) {
+          // eslint-disable-next-line no-bitwise
+          const id =
+            (manufacturerBytes[0] << 24) |
+            (manufacturerBytes[1] << 16) |
+            (manufacturerBytes[2] << 8) |
+            manufacturerBytes[3];
 
-              // Verify the payload matches expected
-              if (
-                decodedPayload.id === expectedPayload.id &&
-                decodedPayload.name === expectedPayload.name
-              ) {
-                console.log(
-                  'BLE: ✅ Payload verification successful:',
-                  decodedPayload,
-                );
-                return true;
-              } else {
-                console.log(
-                  'BLE: ❌ Payload mismatch. Expected:',
-                  expectedPayload,
-                  'Got:',
-                  decodedPayload,
-                );
-                return false;
-              }
-            }
-          } catch (unpackError) {
-            console.error(
-              'BLE: Error unpacking payload from UUID:',
-              unpackError,
+          // Extract name if present
+          let name: string | undefined;
+          if (manufacturerBytes.length > 4) {
+            const nameBytes = manufacturerBytes.slice(4);
+            name = Buffer.from(nameBytes).toString('utf8');
+          }
+
+          const decodedPayload = { id, name };
+
+          // Verify the payload matches expected
+          if (
+            decodedPayload.id === expectedPayload.id &&
+            decodedPayload.name === expectedPayload.name
+          ) {
+            console.log(
+              'BLE: ✅ Payload verification successful:',
+              decodedPayload,
+            );
+            return true;
+          } else {
+            console.log(
+              'BLE: ❌ Payload mismatch. Expected:',
+              expectedPayload,
+              'Got:',
+              decodedPayload,
             );
             return false;
           }
         }
+      } catch (decodeError) {
+        console.error(
+          'BLE: Error decoding manufacturer data:',
+          decodeError,
+        );
+        return false;
       }
 
-      console.log('BLE: Device does not have our packed UUID');
+      console.log('BLE: Device does not have valid manufacturer data');
       return false;
     } catch (error) {
       console.error('BLE: Error verifying device payload:', error);
@@ -404,10 +342,6 @@ export class BLE {
     }
   }
 
-  private hexStringToBytes(hexStringOrBase64: string): number[] {
-    // kept for backward compatibility; delegates to encodeStringToBytes
-    return encodeStringToBytes(hexStringOrBase64);
-  }
 
   public async scanForStudentAttendance(
     onStudentFound: OnStudentFoundCallback,
@@ -460,7 +394,9 @@ export class BLE {
       console.log('BLE: BLE permissions granted');
     } catch (error) {
       console.error('BLE: BLE permissions denied:', error);
-      throw new Error('Bluetooth permissions are required to start scanning. Please grant permissions and try again.');
+      throw new Error(
+        'Bluetooth permissions are required to start scanning. Please grant permissions and try again.',
+      );
     }
 
     console.log('BLE: Requesting location permissions...');
@@ -469,7 +405,9 @@ export class BLE {
       console.log('BLE: Location permissions granted');
     } catch (error) {
       console.error('BLE: Location permissions denied:', error);
-      throw new Error('Location permissions are required for BLE scanning. Please grant permissions and try again.');
+      throw new Error(
+        'Location permissions are required for BLE scanning. Please grant permissions and try again.',
+      );
     }
 
     const state = await manager.state();
@@ -507,43 +445,67 @@ export class BLE {
 
         // Check for packed UUID in service UUIDs
         let decodedPayload: BLEPayload | null = null;
-        if (device.serviceUUIDs) {
-          for (const uuid of device.serviceUUIDs) {
-            // Check if this UUID starts with our base UUID pattern (first 24 chars)
-            if (uuid.startsWith(SERVICE_UID.slice(0, 24))) {
-              console.log('BLE: ✅ Found device with packed UUID:', uuid);
-              try {
-                // Unpack the payload from the UUID
-                const unpackedBytes = unpackFromUuid(uuid);
-                console.log('BLE: Unpacked bytes from UUID:', unpackedBytes);
+        if (device.serviceUUIDs && device.serviceUUIDs.includes(SERVICE_UID)) {
+          console.log(
+            'BLE: ✅ Found device with our service UUID:',
+            SERVICE_UID,
+          );
 
-                // Convert bytes back to payload ID and name
-                if (unpackedBytes.length >= 4) {
-                  // eslint-disable-next-line no-bitwise
-                  const id =
-                    (unpackedBytes[0] << 24) |
-                    (unpackedBytes[1] << 16) |
-                    (unpackedBytes[2] << 8) |
-                    unpackedBytes[3];
+          // Check for manufacturer data
+          if (device.manufacturerData) {
+            try {
+              console.log(
+                'BLE: Manufacturer data found:',
+                device.manufacturerData,
+              );
 
-                  // Extract name if present (bytes 4+)
-                  let name: string | undefined;
-                  if (unpackedBytes.length > 4) {
-                    const nameBytes = unpackedBytes.slice(4);
-                    name = Buffer.from(nameBytes).toString('utf8');
-                  }
-
-                  decodedPayload = { id, name };
-                  console.log('BLE: Decoded payload:', { id, name });
-                }
-              } catch (decodeError) {
-                console.error(
-                  'BLE: Failed to decode payload from UUID:',
-                  decodeError,
+              // Convert manufacturer data to bytes
+              let manufacturerBytes: number[];
+              if (Array.isArray(device.manufacturerData)) {
+                // Convert string array to number array if needed
+                manufacturerBytes = device.manufacturerData.map(b =>
+                  typeof b === 'string' ? parseInt(b, 16) : b,
+                );
+              } else {
+                manufacturerBytes = Object.values(device.manufacturerData).map(b =>
+                  typeof b === 'string' ? parseInt(b, 16) : b,
                 );
               }
-              break;
+
+              console.log('BLE: Manufacturer bytes:', manufacturerBytes);
+
+              // Convert bytes back to payload ID and name
+              if (manufacturerBytes.length >= 4) {
+                // eslint-disable-next-line no-bitwise
+                const id =
+                  (manufacturerBytes[0] << 24) |
+                  (manufacturerBytes[1] << 16) |
+                  (manufacturerBytes[2] << 8) |
+                  manufacturerBytes[3];
+
+                // Extract name if present (bytes 4+)
+                let name: string | undefined;
+                if (manufacturerBytes.length > 4) {
+                  const nameBytes = manufacturerBytes.slice(4);
+                  name = Buffer.from(nameBytes).toString('utf8');
+                }
+
+                decodedPayload = { id, name };
+                console.log('BLE: Decoded payload from manufacturer data:', {
+                  id,
+                  name,
+                });
+              }
+            } catch (decodeError) {
+              console.error(
+                'BLE: Failed to decode payload from manufacturer data:',
+                decodeError,
+              );
             }
+          } else {
+            console.log(
+              'BLE: Device has our service UUID but no manufacturer data',
+            );
           }
         }
 
@@ -598,144 +560,60 @@ export class BLE {
     return stopFunction;
   }
 
-  public async testAdvertising(payload: BLEPayload): Promise<void> {
-    console.log('=== BLE Advertising Test ===');
-    console.log('Note: Advertising with service data (no company ID needed)');
-    try {
-      await this.startAdvertising(payload);
-      console.log('✅ Advertising started successfully');
-      console.log('Payload bytes:', makePayloadBytes(payload));
-    } catch (error) {
-      console.error('❌ Advertising failed:', error);
-    }
-    console.log('=============================');
-  }
-
-  public async testAdvertisingWithCompanyId(
-    payload: BLEPayload,
-  ): Promise<void> {
-    console.log('=== Service Data Testing ===');
-    console.log('Note: Testing advertising with service data');
-    console.log('No company ID needed when using service data');
-
-    try {
-      await this.testAdvertising(payload);
-      await new Promise(r => setTimeout(r, 2000));
-      await this.stopAdvertising();
-      console.log('✅ Advertising test completed successfully');
-    } catch (e) {
-      console.error('❌ Error testing advertising:', e);
-    }
-    console.log('==========================');
-  }
 
   public async testBasicAdvertising(): Promise<void> {
     try {
-      // Set dummy company ID to avoid "Invalid company id" error
+      console.log('BLE: Requesting BLE permissions for test...');
+      try {
+        await PermissionManager.requestBLEPermissions();
+        console.log('BLE: BLE permissions granted for test');
+      } catch (error) {
+        console.error('BLE: BLE permissions denied for test:', error);
+        throw new Error('Bluetooth permissions are required for test advertising. Please grant permissions and try again.');
+      }
+
       (BLEAdvertiser as any).setCompanyId(0xffff);
+
+      // Create payload with ID and name
+      const payload: BLEPayload = {
+        id: 123, // Example ID
+        name: 'sahil', // Example name
+      };
+
+      const payloadBytes = makePayloadBytes(payload);
+
+      console.log('BLE: Test advertising with manufacturer data:', {
+        serviceUuid: SERVICE_UID,
+        manufacturerData: payloadBytes,
+        payload: payload,
+        payloadBytesHex: payloadBytes.map(b => b.toString(16).padStart(2, '0')).join(' ')
+      });
 
       await (BLEAdvertiser as typeof BLEAdvertiser).broadcast(
         SERVICE_UID,
-        [], // Use empty array
+        payloadBytes, // Use manufacturer data instead of empty array
         {
+          txPowerLevel: 2,
           includeDeviceName: false,
           includeTxPowerLevel: false,
           connectable: false,
         },
       );
-      await new Promise(r => setTimeout(r, 1000));
+      console.log('BLE: Broadcasting for 10 seconds...');
+      await new Promise(r => setTimeout(r, 10000)); // 10 seconds instead of 1
       await (BLEAdvertiser as typeof BLEAdvertiser).stopBroadcast();
+      console.log('BLE: Broadcasting stopped after 10 seconds');
     } catch (e) {
-      console.error(e);
+      console.error('BLE: Test advertising error:', e);
+      throw e;
     }
   }
 
-  public checkCurrentAdvertisingPayload(): void {
-    if (!this.isAdvertising || !this.currentPayload) {
-      console.log('No active advertising');
-      return;
-    }
-    const payloadBytes = makePayloadBytes(this.currentPayload);
-    console.log('Currently advertising payload:', this.currentPayload);
-    console.log(
-      'Payload bytes (hex):',
-      payloadBytes.map(b => b.toString(16).padStart(2, '0')).join(''),
-    );
-    try {
-      console.log('Manufacturer base64:', bytesToBase64(payloadBytes));
-    } catch (_) {}
-  }
 
-  public async testFullBLEFlow(testId: number = 0xffff): Promise<void> {
-    try {
-      await this.testAdvertising({ id: testId });
-      await new Promise(r => setTimeout(r, 1000));
-      await this.scanForStudentAttendance(
-        d => console.log('Found during full flow test', d),
-        devices =>
-          console.log('Full flow scan complete. Found:', devices.length),
-        10000,
-      );
-    } catch (e) {
-      console.error('Full flow test failed', e);
-    }
-  }
-
-  public async debugScan(scanDuration: number = 15000): Promise<void> {
-    console.log('DEBUG: Starting full scan');
-    await this.scanForStudentAttendance(
-      d => console.log('DEBUG device:', d),
-      devices => console.log('DEBUG done. total:', devices.length),
-      scanDuration,
-    );
-  }
-
-  public verifySpecificDevice(
-    deviceData: DeviceData,
-    expectedPayload: BLEPayload,
-  ): boolean {
-    const isMatch = this.verifyDevicePayload(deviceData, expectedPayload);
-    if (isMatch) console.log('✅ VERIFIED');
-    else console.log('❌ NOT VERIFIED');
-    return isMatch;
-  }
-
-  public analyzeDeviceServiceData(deviceData: DeviceData): void {
-    console.log(
-      'Device:',
-      deviceData.id,
-      'serviceData:',
-      deviceData.serviceData,
-    );
-    if (!deviceData.serviceData || !deviceData.serviceData[SERVICE_UID])
-      return console.log('No service data for our service UUID');
-    try {
-      const bytes = encodeStringToBytes(deviceData.serviceData[SERVICE_UID]);
-      console.log(
-        'Bytes:',
-        bytes,
-        'Base64:',
-        typeof Buffer !== 'undefined'
-          ? Buffer.from(bytes).toString('base64')
-          : 'n/a',
-      );
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  public async debugBLE(): Promise<void> {
-    console.log('Platform:', Platform.OS, 'BLE Supported:', this.isSupported());
-    try {
-      const blePerm = await PermissionManager.checkBLEPermissions();
-      const locPerm = await PermissionManager.checkLocationPermissions();
-      console.log('Permissions:', { blePerm, locPerm });
-    } catch (e) {
-      console.warn(e);
-    }
-  }
-
-  public async checkPermissions(): Promise<{ble: boolean, location: boolean}> {
+  public async checkPermissions(): Promise<{
+    ble: boolean;
+    location: boolean;
+  }> {
     try {
       const blePerm = await PermissionManager.checkBLEPermissions();
       const locPerm = await PermissionManager.checkLocationPermissions();
@@ -746,10 +624,13 @@ export class BLE {
     }
   }
 
-  public async requestPermissions(): Promise<{ble: boolean, location: boolean}> {
+  public async requestPermissions(): Promise<{
+    ble: boolean;
+    location: boolean;
+  }> {
     try {
       console.log('BLE: Requesting permissions...');
-      
+
       // Request BLE permissions
       try {
         await PermissionManager.requestBLEPermissions();
@@ -757,7 +638,7 @@ export class BLE {
       } catch (error) {
         console.error('BLE: BLE permissions denied:', error);
       }
-      
+
       // Request location permissions
       try {
         await PermissionManager.requestLocationPermissions();
@@ -765,7 +646,7 @@ export class BLE {
       } catch (error) {
         console.error('BLE: Location permissions denied:', error);
       }
-      
+
       // Check final status
       return await this.checkPermissions();
     } catch (error) {
