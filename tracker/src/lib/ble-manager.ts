@@ -151,7 +151,13 @@ export class BLE {
   private bleManager: BleManager;
 
   private constructor() {
-    this.bleManager = new BleManager();
+    try {
+      this.bleManager = new BleManager();
+      console.log('BLE: Manager created successfully');
+    } catch (error) {
+      console.error('BLE: Failed to create manager:', error);
+      throw new Error('Failed to initialize BLE manager');
+    }
   }
 
   public static getInstance(): BLE {
@@ -165,9 +171,21 @@ export class BLE {
 
   public async initializeBLE(): Promise<boolean> {
     try {
+      if (!this.bleManager) {
+        console.error('BLE: Manager not initialized');
+        return false;
+      }
+      
       const state = await this.bleManager.state();
       console.log('BLE: Current state:', state);
-      return state === State.PoweredOn;
+      
+      if (state === State.PoweredOn) {
+        console.log('BLE: Successfully initialized and powered on');
+        return true;
+      } else {
+        console.log('BLE: Not powered on, current state:', state);
+        return false;
+      }
     } catch (error) {
       console.error('BLE: Failed to initialize:', error);
       return false;
@@ -340,6 +358,11 @@ export class BLE {
       console.warn('BLE: Already scanning. Stop current scan first.');
       return () => {};
     }
+    
+    if (!this.bleManager) {
+      throw new Error('BLE manager not initialized');
+    }
+    
     await PermissionManager.requestBLEPermissions();
     await PermissionManager.requestLocationPermissions();
 

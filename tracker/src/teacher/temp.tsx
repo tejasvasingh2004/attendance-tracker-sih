@@ -37,6 +37,13 @@ export default function Temp() {
         return;
       }
 
+      // Initialize BLE first
+      const initialized = await BLE.initializeBLE();
+      if (!initialized) {
+        Alert.alert('Error', 'Failed to initialize BLE. Please check Bluetooth is enabled.');
+        return;
+      }
+
       await BLE.startAdvertising({ id: 123 }); // test payload
       advertisingRef.current = true;
       Alert.alert('Advertising', 'Started advertising payload [123]');
@@ -63,11 +70,18 @@ export default function Temp() {
     }
   }, []);
 
-  const onStartScan = useCallback(() => {
+  const onStartScan = useCallback(async () => {
     try {
       // Check if BLE is supported
       if (!BLE.isSupported()) {
         Alert.alert('Error', 'BLE scanning is not supported on this device');
+        return;
+      }
+
+      // Initialize BLE first
+      const initialized = await BLE.initializeBLE();
+      if (!initialized) {
+        Alert.alert('Error', 'Failed to initialize BLE. Please check Bluetooth is enabled.');
         return;
       }
 
@@ -99,7 +113,7 @@ export default function Temp() {
             `📊 Scan complete! Found ${foundStudents.length} devices total`,
           ]);
         },
-        10000, // 10 second scan
+        30000, // 10 second scan
       );
 
       scanningRef.current = true;
