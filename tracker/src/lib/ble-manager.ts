@@ -32,16 +32,21 @@ function makePayloadBytes(payload: BLEPayload): number[] {
   if (!Number.isInteger(id) || id < 0 || id > 0xffffffff) {
     throw new Error('Payload ID must be a 32-bit unsigned integer');
   }
-  
+
   // Build big-endian 4 bytes for ID
-  const idBytes = [(id >>> 24) & 0xff, (id >>> 16) & 0xff, (id >>> 8) & 0xff, id & 0xff];
-  
+  const idBytes = [
+    (id >>> 24) & 0xff,
+    (id >>> 16) & 0xff,
+    (id >>> 8) & 0xff,
+    id & 0xff,
+  ];
+
   // Add name bytes if provided (up to 8 bytes to fit in 12 total)
   if (name) {
     const nameBytes = Array.from(Buffer.from(name, 'utf8')).slice(0, 8);
     return [...idBytes, ...nameBytes];
   }
-  
+
   return idBytes;
 }
 
@@ -140,7 +145,6 @@ function encodeStringToBytes(data: string): number[] {
   }
 }
 
-
 /* ===== BLE Class ===== */
 export class BLE {
   private static instance: BLE;
@@ -168,7 +172,9 @@ export class BLE {
         console.log('BLE: BleManager created successfully');
       } catch (error) {
         console.error('BLE: Failed to create BleManager:', error);
-        throw new Error('Failed to create BLE manager. Please ensure BLE is supported on this device.');
+        throw new Error(
+          'Failed to create BLE manager. Please ensure BLE is supported on this device.',
+        );
       }
     }
     return this.bleManager;
@@ -183,7 +189,7 @@ export class BLE {
       const manager = await this.ensureBleManager();
       const state = await manager.state();
       console.log('BLE: Current state:', state);
-      
+
       if (state === State.PoweredOn) {
         console.log('BLE: Successfully initialized and powered on');
         return true;
@@ -205,20 +211,27 @@ export class BLE {
     if (this.isAdvertising)
       throw new Error('Already advertising. Stop current advertising first.');
 
-    await PermissionManager.requestBLEPermissions();
+    console.log('BLE: Requesting BLE permissions...');
+    try {
+      await PermissionManager.requestBLEPermissions();
+      console.log('BLE: BLE permissions granted');
+    } catch (error) {
+      console.error('BLE: BLE permissions denied:', error);
+      throw new Error('Bluetooth permissions are required to start advertising. Please grant permissions and try again.');
+    }
 
-    (BLEAdvertiser as typeof BLEAdvertiser).setCompanyId(0xFFFF);
+    (BLEAdvertiser as typeof BLEAdvertiser).setCompanyId(0xffff);
 
     const payloadBytes = makePayloadBytes(payload);
     const serviceUid = options.serviceUid ?? SERVICE_UID;
 
     // Pack payload bytes into UUID
     const packedUuid = packIntoUuid(serviceUid, payloadBytes.slice(0, 12));
-    
-    console.log('BLE: Advertising with packed UUID:', { 
-      originalUuid: serviceUid, 
+
+    console.log('BLE: Advertising with packed UUID:', {
+      originalUuid: serviceUid,
       packedUuid,
-      payloadBytes: payloadBytes.slice(0, 12)
+      payloadBytes: payloadBytes.slice(0, 12),
     });
 
     try {
@@ -283,28 +296,46 @@ export class BLE {
             const unpackedBytes = unpackFromUuid(uuid);
             if (unpackedBytes.length >= 4) {
               // eslint-disable-next-line no-bitwise
-              const id = (unpackedBytes[0] << 24) | (unpackedBytes[1] << 16) | (unpackedBytes[2] << 8) | unpackedBytes[3];
-              
+              const id =
+                (unpackedBytes[0] << 24) |
+                (unpackedBytes[1] << 16) |
+                (unpackedBytes[2] << 8) |
+                unpackedBytes[3];
+
               // Extract name if present
               let name: string | undefined;
               if (unpackedBytes.length > 4) {
                 const nameBytes = unpackedBytes.slice(4);
                 name = Buffer.from(nameBytes).toString('utf8');
               }
-              
+
               const decodedPayload = { id, name };
-              
+
               // Verify the payload matches expected
-              if (decodedPayload.id === expectedPayload.id && decodedPayload.name === expectedPayload.name) {
-                console.log('BLE: ✅ Payload verification successful:', decodedPayload);
+              if (
+                decodedPayload.id === expectedPayload.id &&
+                decodedPayload.name === expectedPayload.name
+              ) {
+                console.log(
+                  'BLE: ✅ Payload verification successful:',
+                  decodedPayload,
+                );
                 return true;
               } else {
-                console.log('BLE: ❌ Payload mismatch. Expected:', expectedPayload, 'Got:', decodedPayload);
+                console.log(
+                  'BLE: ❌ Payload mismatch. Expected:',
+                  expectedPayload,
+                  'Got:',
+                  decodedPayload,
+                );
                 return false;
               }
             }
           } catch (unpackError) {
-            console.error('BLE: Error unpacking payload from UUID:', unpackError);
+            console.error(
+              'BLE: Error unpacking payload from UUID:',
+              unpackError,
+            );
             return false;
           }
         }
@@ -365,11 +396,26 @@ export class BLE {
       console.warn('BLE: Already scanning. Stop current scan first.');
       return () => {};
     }
-    
+
     const manager = await this.ensureBleManager();
-    
-    await PermissionManager.requestBLEPermissions();
-    await PermissionManager.requestLocationPermissions();
+
+    console.log('BLE: Requesting BLE permissions...');
+    try {
+      await PermissionManager.requestBLEPermissions();
+      console.log('BLE: BLE permissions granted');
+    } catch (error) {
+      console.error('BLE: BLE permissions denied:', error);
+      throw new Error('Bluetooth permissions are required to start scanning. Please grant permissions and try again.');
+    }
+
+    console.log('BLE: Requesting location permissions...');
+    try {
+      await PermissionManager.requestLocationPermissions();
+      console.log('BLE: Location permissions granted');
+    } catch (error) {
+      console.error('BLE: Location permissions denied:', error);
+      throw new Error('Location permissions are required for BLE scanning. Please grant permissions and try again.');
+    }
 
     const state = await manager.state();
     if (state !== State.PoweredOn)
@@ -415,39 +461,46 @@ export class BLE {
                 // Unpack the payload from the UUID
                 const unpackedBytes = unpackFromUuid(uuid);
                 console.log('BLE: Unpacked bytes from UUID:', unpackedBytes);
-                
+
                 // Convert bytes back to payload ID and name
                 if (unpackedBytes.length >= 4) {
                   // eslint-disable-next-line no-bitwise
-                  const id = (unpackedBytes[0] << 24) | (unpackedBytes[1] << 16) | (unpackedBytes[2] << 8) | unpackedBytes[3];
-                  
+                  const id =
+                    (unpackedBytes[0] << 24) |
+                    (unpackedBytes[1] << 16) |
+                    (unpackedBytes[2] << 8) |
+                    unpackedBytes[3];
+
                   // Extract name if present (bytes 4+)
                   let name: string | undefined;
                   if (unpackedBytes.length > 4) {
                     const nameBytes = unpackedBytes.slice(4);
                     name = Buffer.from(nameBytes).toString('utf8');
                   }
-                  
+
                   decodedPayload = { id, name };
                   console.log('BLE: Decoded payload:', { id, name });
                 }
               } catch (decodeError) {
-                console.error('BLE: Failed to decode payload from UUID:', decodeError);
+                console.error(
+                  'BLE: Failed to decode payload from UUID:',
+                  decodeError,
+                );
               }
               break;
             }
           }
         }
-        
+
         if (decodedPayload) {
           deviceData.decodedPayload = decodedPayload;
           console.log('BLE: ✅ Device with valid payload:', {
             id: deviceData.id,
             name: deviceData.name,
             payload: decodedPayload,
-            rssi: deviceData.rssi
+            rssi: deviceData.rssi,
           });
-          
+
           if (!seenIds.has(device.id)) {
             foundStudents.push(deviceData);
             seenIds.add(device.id);
@@ -458,7 +511,7 @@ export class BLE {
             id: deviceData.id,
             name: deviceData.name,
             serviceUUIDs: deviceData.serviceUUIDs,
-            rssi: deviceData.rssi
+            rssi: deviceData.rssi,
           });
         }
       },
@@ -536,7 +589,7 @@ export class BLE {
         },
       );
       await new Promise(r => setTimeout(r, 1000));
-      await (BLEAdvertiser as any).stopBroadcast();
+      await (BLEAdvertiser as typeof BLEAdvertiser).stopBroadcast();
     } catch (e) {
       console.error(e);
     }
@@ -624,6 +677,17 @@ export class BLE {
       console.log('Permissions:', { blePerm, locPerm });
     } catch (e) {
       console.warn(e);
+    }
+  }
+
+  public async checkPermissions(): Promise<{ble: boolean, location: boolean}> {
+    try {
+      const blePerm = await PermissionManager.checkBLEPermissions();
+      const locPerm = await PermissionManager.checkLocationPermissions();
+      return { ble: blePerm, location: locPerm };
+    } catch (error) {
+      console.error('BLE: Error checking permissions:', error);
+      return { ble: false, location: false };
     }
   }
 }

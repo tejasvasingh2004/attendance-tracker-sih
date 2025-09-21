@@ -17,8 +17,15 @@ export default function Temp() {
   const scanningRef = useRef(false);
   const [detectedDevices, setDetectedDevices] = useState<DeviceData[]>([]);
   const [scanMessages, setScanMessages] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<{ble: boolean, location: boolean}>({ble: false, location: false});
 
   useEffect(() => {
+    const checkPermissions = async () => {
+      const permStatus = await BLE.checkPermissions();
+      setPermissions(permStatus);
+    };
+    checkPermissions();
+
     return () => {
       if (advertisingRef.current) {
         BLE.stopAdvertising().catch(() => {});
@@ -139,6 +146,23 @@ export default function Temp() {
     <View style={styles.wrapper}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={true}>
         <Text style={styles.title}>BLE Testing</Text>
+
+      {/* Permission Status Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Permission Status</Text>
+        <View style={styles.permissionRow}>
+          <Text style={styles.permissionLabel}>Bluetooth:</Text>
+          <Text style={[styles.permissionStatus, permissions.ble ? styles.granted : styles.denied]}>
+            {permissions.ble ? '✅ Granted' : '❌ Denied'}
+          </Text>
+        </View>
+        <View style={styles.permissionRow}>
+          <Text style={styles.permissionLabel}>Location:</Text>
+          <Text style={[styles.permissionStatus, permissions.location ? styles.granted : styles.denied]}>
+            {permissions.location ? '✅ Granted' : '❌ Denied'}
+          </Text>
+        </View>
+      </View>
 
       {/* Advertising Section */}
       <View style={styles.section}>
@@ -320,5 +344,26 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginTop: 4,
+  },
+  permissionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  permissionLabel: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  permissionStatus: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  granted: {
+    color: '#28a745',
+  },
+  denied: {
+    color: '#d64545',
   },
 });

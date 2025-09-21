@@ -58,20 +58,42 @@ export class PermissionManager {
       return { granted: true, deniedPermissions: [] };
     }
 
+    console.log(`PermissionManager: Requesting ${group.name} permissions:`, group.permissions);
+
     try {
-      const results = await PermissionsAndroid.requestMultiple(
-        group.permissions as Permission[]
-      );
+      const deniedPermissions: string[] = [];
       
-      const deniedPermissions = Object.entries(results)
-        .filter(([_, status]) => status !== 'granted')
-        .map(([permission]) => permission);
+      // Request permissions one by one for better user experience
+      for (const permission of group.permissions) {
+        console.log(`PermissionManager: Requesting permission: ${permission}`);
+        
+        const result = await PermissionsAndroid.request(
+          permission as Permission,
+          {
+            title: `${group.name} Permission`,
+            message: `This app needs ${group.name.toLowerCase()} permission to work properly.`,
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        
+        console.log(`PermissionManager: Permission ${permission} result:`, result);
+        
+        if (result !== 'granted') {
+          deniedPermissions.push(permission);
+        }
+      }
+
+      const granted = deniedPermissions.length === 0;
+      console.log(`PermissionManager: ${group.name} permissions result:`, { granted, deniedPermissions });
 
       return {
-        granted: deniedPermissions.length === 0,
+        granted,
         deniedPermissions,
       };
     } catch (error) {
+      console.error(`PermissionManager: Failed to request ${group.name} permissions:`, error);
       throw new Error(`Failed to request ${group.name} permissions: ${error}`);
     }
   }
