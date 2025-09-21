@@ -148,16 +148,11 @@ export class BLE {
   private isScanning: boolean = false;
   private currentPayload: BLEPayload | null = null;
   private currentScanStopFunction: (() => void) | null = null;
-  private bleManager: BleManager;
+  private bleManager: BleManager | null = null;
 
   private constructor() {
-    try {
-      this.bleManager = new BleManager();
-      console.log('BLE: Manager created successfully');
-    } catch (error) {
-      console.error('BLE: Failed to create manager:', error);
-      throw new Error('Failed to initialize BLE manager');
-    }
+    // Don't initialize BleManager in constructor - do it lazily when needed
+    console.log('BLE: Instance created, will initialize manager when needed');
   }
 
   public static getInstance(): BLE {
@@ -165,18 +160,28 @@ export class BLE {
     return BLE.instance;
   }
 
+  private async ensureBleManager(): Promise<BleManager> {
+    if (!this.bleManager) {
+      try {
+        console.log('BLE: Creating BleManager...');
+        this.bleManager = new BleManager();
+        console.log('BLE: BleManager created successfully');
+      } catch (error) {
+        console.error('BLE: Failed to create BleManager:', error);
+        throw new Error('Failed to create BLE manager. Please ensure BLE is supported on this device.');
+      }
+    }
+    return this.bleManager;
+  }
+
   public isSupported(): boolean {
-    return Platform.OS === 'android' && !!BLEAdvertiser && !!this.bleManager;
+    return Platform.OS === 'android' && !!BLEAdvertiser;
   }
 
   public async initializeBLE(): Promise<boolean> {
     try {
-      if (!this.bleManager) {
-        console.error('BLE: Manager not initialized');
-        return false;
-      }
-      
-      const state = await this.bleManager.state();
+      const manager = await this.ensureBleManager();
+      const state = await manager.state();
       console.log('BLE: Current state:', state);
       
       if (state === State.PoweredOn) {
@@ -336,8 +341,10 @@ export class BLE {
       return;
     }
     try {
-      this.bleManager.stopDeviceScan();
-      console.log('BLE: Stop Scan Successful');
+      if (this.bleManager) {
+        this.bleManager.stopDeviceScan();
+        console.log('BLE: Stop Scan Successful');
+      }
     } catch (error) {
       console.log('BLE: Stop Scan Error', error);
     }
@@ -359,14 +366,12 @@ export class BLE {
       return () => {};
     }
     
-    if (!this.bleManager) {
-      throw new Error('BLE manager not initialized');
-    }
+    const manager = await this.ensureBleManager();
     
     await PermissionManager.requestBLEPermissions();
     await PermissionManager.requestLocationPermissions();
 
-    const state = await this.bleManager.state();
+    const state = await manager.state();
     if (state !== State.PoweredOn)
       throw new Error(`Bluetooth is not enabled. Current state: ${state}`);
 
@@ -375,7 +380,7 @@ export class BLE {
     const seenIds = new Set<string>();
 
     // Scan for all devices since we're looking for packed UUIDs that start with our base pattern
-    this.bleManager.startDeviceScan(
+    manager.startDeviceScan(
       null, // Scan for all devices, not just specific service UUIDs
       { allowDuplicates: false },
       (error, device) => {
@@ -463,7 +468,9 @@ export class BLE {
     const stopFunction = () => {
       if (timer) clearTimeout(timer);
       try {
-        this.bleManager.stopDeviceScan();
+        if (this.bleManager) {
+          this.bleManager.stopDeviceScan();
+        }
       } catch (e) {}
       this.isScanning = false;
       if (onScanComplete) onScanComplete(foundStudents);
@@ -471,7 +478,9 @@ export class BLE {
 
     timer = setTimeout(() => {
       try {
-        this.bleManager.stopDeviceScan();
+        if (this.bleManager) {
+          this.bleManager.stopDeviceScan();
+        }
       } catch (e) {}
       this.isScanning = false;
       if (onScanComplete) onScanComplete(foundStudents);
