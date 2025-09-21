@@ -36,6 +36,29 @@ export default function Temp() {
     };
   }, []);
 
+  const onRequestPermissions = useCallback(async () => {
+    try {
+      setScanMessages(prev => [...prev, '🔐 Requesting permissions...']);
+      
+      // Request BLE permissions
+      try {
+        await BLE.initializeBLE();
+        setScanMessages(prev => [...prev, '✅ BLE permissions granted']);
+      } catch (error) {
+        setScanMessages(prev => [...prev, `❌ BLE permissions denied: ${error}`]);
+      }
+      
+      // Update permission status
+      const permStatus = await BLE.checkPermissions();
+      setPermissions(permStatus);
+      
+      setScanMessages(prev => [...prev, '📋 Permission status updated']);
+    } catch (error) {
+      console.error('Permission request error:', error);
+      setScanMessages(prev => [...prev, `❌ Permission request failed: ${error}`]);
+    }
+  }, []);
+
   const onStart = useCallback(async () => {
     try {
       // Check if BLE is supported
@@ -53,6 +76,11 @@ export default function Temp() {
 
       await BLE.startAdvertising({ id: 123 }); // test payload
       advertisingRef.current = true;
+      
+      // Update permission status after successful advertising
+      const permStatus = await BLE.checkPermissions();
+      setPermissions(permStatus);
+      
       Alert.alert('Advertising', 'Started advertising payload [123]');
     } catch (err) {
       console.error('Advertise error:', err);
@@ -124,7 +152,11 @@ export default function Temp() {
       );
 
       scanningRef.current = true;
-      setScanMessages(prev => [...prev, '🔍 Scanning for 10 seconds...']);
+      setScanMessages(prev => [...prev, '🔍 Scanning for 30 seconds...']);
+      
+      // Update permission status after successful scan start
+      const permStatus = await BLE.checkPermissions();
+      setPermissions(permStatus);
     } catch (err) {
       console.error('Scan error:', err);
       Alert.alert('Scan Failed', 'Failed to start scanning');
@@ -162,6 +194,12 @@ export default function Temp() {
             {permissions.location ? '✅ Granted' : '❌ Denied'}
           </Text>
         </View>
+        <TouchableOpacity 
+          style={[styles.button, styles.permissionButton]} 
+          onPress={onRequestPermissions}
+        >
+          <Text style={styles.buttonText}>Request Permissions</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Advertising Section */}
@@ -281,6 +319,7 @@ const styles = StyleSheet.create({
   },
   stop: { backgroundColor: '#d64545' },
   scan: { backgroundColor: '#28a745' },
+  permissionButton: { backgroundColor: '#ff9500' },
   buttonText: {
     color: 'white',
     fontSize: 16,
