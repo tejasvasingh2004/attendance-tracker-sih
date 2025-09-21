@@ -41,7 +41,6 @@ function makePayloadBytes(payload: BLEPayload): number[] {
     id & 0xff,
   ];
 
-  // Add name bytes if provided (up to 8 bytes to fit in 12 total)
   if (name) {
     const nameBytes = Array.from(Buffer.from(name, 'utf8')).slice(0, 8);
     return [...idBytes, ...nameBytes];
@@ -168,13 +167,40 @@ export class BLE {
     if (!this.bleManager) {
       try {
         console.log('BLE: Creating BleManager...');
+        
+        // Check if BleManager is available
+        if (!BleManager) {
+          throw new Error('BleManager is not available. Please check if react-native-ble-plx is properly installed.');
+        }
+        
         this.bleManager = new BleManager();
         console.log('BLE: BleManager created successfully');
+        
+        // Test if the manager is actually working
+        try {
+          const state = await this.bleManager.state();
+          console.log('BLE: Manager state check successful:', state);
+        } catch (stateError) {
+          console.error('BLE: Manager state check failed:', stateError);
+          throw new Error('BLE manager created but not functional. Please restart the app.');
+        }
+        
       } catch (error) {
         console.error('BLE: Failed to create BleManager:', error);
-        throw new Error(
-          'Failed to create BLE manager. Please ensure BLE is supported on this device.',
-        );
+        this.bleManager = null; // Reset to null so we can try again
+        
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('BleManager is not available')) {
+            throw new Error('BLE library not properly installed. Please reinstall react-native-ble-plx and rebuild the app.');
+          } else if (error.message.includes('not functional')) {
+            throw new Error('BLE manager not working properly. Please restart the app and try again.');
+          } else {
+            throw new Error(`BLE initialization failed: ${error.message}`);
+          }
+        } else {
+          throw new Error('Failed to create BLE manager. Please ensure BLE is supported on this device.');
+        }
       }
     }
     return this.bleManager;
@@ -182,6 +208,35 @@ export class BLE {
 
   public isSupported(): boolean {
     return Platform.OS === 'android' && !!BLEAdvertiser;
+  }
+
+  public async checkBLELibrary(): Promise<{available: boolean, error?: string}> {
+    try {
+      console.log('BLE: Checking BLE library availability...');
+      
+      // Check if BleManager is available
+      if (!BleManager) {
+        return { available: false, error: 'BleManager not available' };
+      }
+      
+      // Try to create a BleManager instance
+      const testManager = new BleManager();
+      
+      // Try to get state to verify it's working
+      const state = await testManager.state();
+      console.log('BLE: Library check successful, state:', state);
+      
+      // Clean up test manager
+      testManager.destroy();
+      
+      return { available: true };
+    } catch (error) {
+      console.error('BLE: Library check failed:', error);
+      return { 
+        available: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
   }
 
   public async initializeBLE(): Promise<boolean> {
@@ -687,6 +742,34 @@ export class BLE {
       return { ble: blePerm, location: locPerm };
     } catch (error) {
       console.error('BLE: Error checking permissions:', error);
+      return { ble: false, location: false };
+    }
+  }
+
+  public async requestPermissions(): Promise<{ble: boolean, location: boolean}> {
+    try {
+      console.log('BLE: Requesting permissions...');
+      
+      // Request BLE permissions
+      try {
+        await PermissionManager.requestBLEPermissions();
+        console.log('BLE: BLE permissions granted');
+      } catch (error) {
+        console.error('BLE: BLE permissions denied:', error);
+      }
+      
+      // Request location permissions
+      try {
+        await PermissionManager.requestLocationPermissions();
+        console.log('BLE: Location permissions granted');
+      } catch (error) {
+        console.error('BLE: Location permissions denied:', error);
+      }
+      
+      // Check final status
+      return await this.checkPermissions();
+    } catch (error) {
+      console.error('BLE: Error requesting permissions:', error);
       return { ble: false, location: false };
     }
   }

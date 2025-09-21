@@ -18,13 +18,17 @@ export default function Temp() {
   const [detectedDevices, setDetectedDevices] = useState<DeviceData[]>([]);
   const [scanMessages, setScanMessages] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<{ble: boolean, location: boolean}>({ble: false, location: false});
+  const [bleLibraryStatus, setBleLibraryStatus] = useState<{available: boolean, error?: string}>({available: false});
 
   useEffect(() => {
-    const checkPermissions = async () => {
+    const checkStatus = async () => {
       const permStatus = await BLE.checkPermissions();
       setPermissions(permStatus);
+      
+      const libStatus = await BLE.checkBLELibrary();
+      setBleLibraryStatus(libStatus);
     };
-    checkPermissions();
+    checkStatus();
 
     return () => {
       if (advertisingRef.current) {
@@ -40,22 +44,37 @@ export default function Temp() {
     try {
       setScanMessages(prev => [...prev, '🔐 Requesting permissions...']);
       
-      // Request BLE permissions
-      try {
-        await BLE.initializeBLE();
-        setScanMessages(prev => [...prev, '✅ BLE permissions granted']);
-      } catch (error) {
-        setScanMessages(prev => [...prev, `❌ BLE permissions denied: ${error}`]);
+      // Request all permissions
+      const newPermissions = await BLE.requestPermissions();
+      setPermissions(newPermissions);
+      
+      if (newPermissions.ble && newPermissions.location) {
+        setScanMessages(prev => [...prev, '✅ All permissions granted']);
+      } else {
+        setScanMessages(prev => [...prev, `❌ Some permissions denied - BLE: ${newPermissions.ble}, Location: ${newPermissions.location}`]);
       }
       
-      // Update permission status
-      const permStatus = await BLE.checkPermissions();
-      setPermissions(permStatus);
-      
-      setScanMessages(prev => [...prev, '📋 Permission status updated']);
     } catch (error) {
       console.error('Permission request error:', error);
       setScanMessages(prev => [...prev, `❌ Permission request failed: ${error}`]);
+    }
+  }, []);
+
+  const onCheckLibrary = useCallback(async () => {
+    try {
+      setScanMessages(prev => [...prev, '🔍 Checking BLE library...']);
+      
+      const libStatus = await BLE.checkBLELibrary();
+      setBleLibraryStatus(libStatus);
+      
+      if (libStatus.available) {
+        setScanMessages(prev => [...prev, '✅ BLE library is working properly']);
+      } else {
+        setScanMessages(prev => [...prev, `❌ BLE library error: ${libStatus.error}`]);
+      }
+    } catch (error) {
+      console.error('Library check error:', error);
+      setScanMessages(prev => [...prev, `❌ Library check failed: ${error}`]);
     }
   }, []);
 
@@ -179,6 +198,26 @@ export default function Temp() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={true}>
         <Text style={styles.title}>BLE Testing</Text>
 
+      {/* BLE Library Status Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>BLE Library Status</Text>
+        <View style={styles.permissionRow}>
+          <Text style={styles.permissionLabel}>BLE Library:</Text>
+          <Text style={[styles.permissionStatus, bleLibraryStatus.available ? styles.granted : styles.denied]}>
+            {bleLibraryStatus.available ? '✅ Available' : '❌ Not Available'}
+          </Text>
+        </View>
+        {bleLibraryStatus.error && (
+          <Text style={styles.errorText}>Error: {bleLibraryStatus.error}</Text>
+        )}
+        <TouchableOpacity 
+          style={[styles.button, styles.libraryButton]} 
+          onPress={onCheckLibrary}
+        >
+          <Text style={styles.buttonText}>Check BLE Library</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Permission Status Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Permission Status</Text>
@@ -291,6 +330,11 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
+  errorText: {
+    fontSize: 14,
+    color: '#d64545',
+    marginBottom: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -320,6 +364,7 @@ const styles = StyleSheet.create({
   stop: { backgroundColor: '#d64545' },
   scan: { backgroundColor: '#28a745' },
   permissionButton: { backgroundColor: '#ff9500' },
+  libraryButton: { backgroundColor: '#9c27b0' },
   buttonText: {
     color: 'white',
     fontSize: 16,
