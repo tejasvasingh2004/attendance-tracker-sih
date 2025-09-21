@@ -1,8 +1,54 @@
-import * as BLEAdvertiser from 'react-native-ble-advertiser';
+import BLEAdvertiser from 'react-native-ble-advertiser';
 import { NativeEventEmitter, NativeModules } from 'react-native';
 
-// UUID for student attendance BLE service (replace with your actual UUID if different)
-const STUDENT_SERVICE_UUID = '0000abcd-0000-1000-8000-00805f9b34fb';
+// Constants - synced with ble-manager.ts
+const SERVICE_UID = '0000feed-0000-1000-8000-00805f9b34fb';
+const DEV_COMPANY_ID = 0xffff;
+
+// Types - synced with ble-manager.ts
+export interface BLEPayload {
+  id: number;
+}
+
+export interface BLEAdvertisingOptions {
+  companyId?: number;
+  serviceUid?: string;
+}
+
+interface DeviceData {
+    id: string;
+    name?: string;
+    [key: string]: any;
+}
+
+type OnStudentFoundCallback = (deviceData: DeviceData) => void;
+type OnScanCompleteCallback = (foundStudents: DeviceData[]) => void;
+
+// Utility functions - synced with ble-manager.ts approach
+function validatePayload(payload: BLEPayload): void {
+  if (typeof payload.id !== 'number' || !Number.isInteger(payload.id)) {
+    throw new Error('Payload ID must be a valid integer');
+  }
+  
+  if (payload.id < 0 || payload.id > 0xffffffff) {
+    throw new Error('Payload ID must be between 0 and 4294967295');
+  }
+}
+
+/*eslint-disable no-bitwise */
+function makePayloadBytes(payload: BLEPayload): number[] {
+  const { id } = payload;
+  const unsignedId = id >>> 0; // Convert to unsigned 32-bit integer
+  
+  const buffer = new Uint8Array(4);
+  buffer[0] = (unsignedId >> 24) & 0xff;
+  buffer[1] = (unsignedId >> 16) & 0xff;
+  buffer[2] = (unsignedId >> 8) & 0xff;
+  buffer[3] = unsignedId & 0xff;
+  
+  return Array.from(buffer);
+}
+/*eslint-enable no-bitwise */
 
 /**
  * Scan for student BLE signals for attendance.
@@ -10,11 +56,15 @@ const STUDENT_SERVICE_UUID = '0000abcd-0000-1000-8000-00805f9b34fb';
  * @param {function} onScanComplete - Called with all found students after scan
  * @param {number} scanDuration - Scan duration in ms (default 15000)
  */
-export function scanForStudentAttendance(onStudentFound, onScanComplete, scanDuration = 15000) {
+export function scanForStudentAttendance(
+    onStudentFound: OnStudentFoundCallback, 
+    onScanComplete: OnScanCompleteCallback, 
+    scanDuration: number = 15000
+) {
     const eventEmitter = new NativeEventEmitter(NativeModules.BLEAdvertiser);
-    const foundStudents = [];
-    const seenIds = new Set();
-    const deviceListener = eventEmitter.addListener('onDeviceFound', (deviceData) => {
+    const foundStudents: DeviceData[] = [];
+    const seenIds = new Set<string>();
+    const deviceListener = eventEmitter.addListener('onDeviceFound', (deviceData: DeviceData) => {
         // Project-specific: expect deviceData.name like 'Student_<id>'
 
             foundStudents.push({
@@ -25,10 +75,10 @@ export function scanForStudentAttendance(onStudentFound, onScanComplete, scanDur
         
     });
 
-    BLEAdvertiser.scanByService(STUDENT_SERVICE_UUID, {
-        scanMode: BLEAdvertiser.SCAN_MODE_LOW_LATENCY, //mid 
-        matchMode: BLEAdvertiser.MATCH_MODE_STICKY,
-        numberOfMatches: BLEAdvertiser.MATCH_NUM_MAX_ADVERTISEMENT,
+    BLEAdvertiser.scanByService(SERVICE_UID, {
+        scanMode: 1, // Dummy value for testing
+        matchMode: 1, // Dummy value for testing
+        numberOfMatches: 10, // Dummy value for testing
         reportDelay: 0,
     })
         .then(success => console.log('Scan Successful', success))
@@ -53,6 +103,55 @@ export function scanForStudentAttendance(onStudentFound, onScanComplete, scanDur
         if (onScanComplete) onScanComplete(foundStudents);
     };
 }
+
+/**
+ * Start BLE advertising for student attendance.
+ * @param {BLEPayload} payload - The payload to advertise
+ * @param {BLEAdvertisingOptions} options - Advertising options
+ */
+export async function startStudentAdvertising(
+    payload: BLEPayload,
+    options: BLEAdvertisingOptions = {}
+): Promise<void> {
+    try {
+        // Validate payload
+        validatePayload(payload);
+
+        // Set company ID if supported
+        const companyId = options.companyId ?? DEV_COMPANY_ID;
+        if (typeof BLEAdvertiser.setCompanyId === 'function') {
+            BLEAdvertiser.setCompanyId(companyId);
+        }
+
+        // Create payload bytes
+        const payloadBytes = makePayloadBytes(payload);
+        const serviceUid = options.serviceUid ?? SERVICE_UID;
+
+        // Start advertising
+        await BLEAdvertiser.broadcast(serviceUid, payloadBytes, {});
+
+        console.log(`BLE: Started advertising payload [${payload.id}]`);
+    } catch (error) {
+        console.error('BLE: Failed to start advertising:', error);
+        throw error;
+    }
+}
+
+/**
+ * Stop BLE advertising.
+ */
+export async function stopStudentAdvertising(): Promise<void> {
+    try {
+        if (typeof BLEAdvertiser.stopBroadcast === 'function') {
+            await BLEAdvertiser.stopBroadcast();
+        }
+        console.log('BLE: Stopped advertising');
+    } catch (error) {
+        console.error('BLE: Failed to stop advertising:', error);
+        throw error;
+    }
+}
+
 // // BLE scanning utility for teacher attendance
 // import { BleManager, Device } from 'react-native-ble-plx';
 

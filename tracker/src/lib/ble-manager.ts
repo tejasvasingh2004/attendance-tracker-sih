@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, NativeEventEmitter, NativeModules } from 'react-native';
 import BLEAdvertiser from 'react-native-ble-advertiser';
 import PermissionManager from './permission-manager';
 
@@ -15,6 +15,15 @@ export interface BLEAdvertisingOptions {
   companyId?: number;
   serviceUid?: string;
 }
+
+export interface DeviceData {
+  id: string;
+  name?: string;
+  [key: string]: any;
+}
+
+export type OnStudentFoundCallback = (deviceData: DeviceData) => void;
+export type OnScanCompleteCallback = (foundStudents: DeviceData[]) => void;
 
 /*eslint-disable no-bitwise */
 function makePayloadBytes(payload: BLEPayload): number[] {
@@ -46,7 +55,9 @@ function validatePayload(payload: BLEPayload): void {
 export class BLE {
   private static instance: BLE;
   private isAdvertising: boolean = false;
+  private isScanning: boolean = false;
   private currentPayload: BLEPayload | null = null;
+  private currentScanStopFunction: (() => void) | null = null;
 
   private constructor() {}
 
@@ -141,6 +152,87 @@ export class BLE {
 
   public isSupported(): boolean {
     return Platform.OS === 'android' && typeof BLEAdvertiser !== 'undefined';
+  }
+
+  /**
+   * Scan for student BLE signals for attendance.
+   * @param {OnStudentFoundCallback} onStudentFound - Called with each found student device
+   * @param {OnScanCompleteCallback} onScanComplete - Called with all found students after scan
+   * @param {number} scanDuration - Scan duration in ms (default 15000)
+   */
+  public scanForStudentAttendance(
+    onStudentFound: OnStudentFoundCallback,
+    onScanComplete: OnScanCompleteCallback,
+    scanDuration: number = 15000
+  ): () => void {
+    if (this.isScanning) {
+      console.warn('BLE: Already scanning. Stop current scan first.');
+      return () => {};
+    }
+
+    this.isScanning = true;
+    const eventEmitter = new NativeEventEmitter(NativeModules.BLEAdvertiser);
+    const foundStudents: DeviceData[] = [];
+    const seenIds = new Set<string>();
+
+    const deviceListener = eventEmitter.addListener('onDeviceFound', (deviceData: DeviceData) => {
+      if (!seenIds.has(deviceData.id)) {
+        foundStudents.push(deviceData);
+        seenIds.add(deviceData.id);
+        console.log(`BLE: Found student device [${deviceData.id}]`);
+        if (onStudentFound) onStudentFound(deviceData);
+      }
+    });
+
+    // Store listener for cleanup
+    this.currentScanStopFunction = () => {
+      clearTimeout(timer);
+      deviceListener.remove();
+      this.stopScan();
+      if (onScanComplete) onScanComplete(foundStudents);
+    };
+
+    BLEAdvertiser.scanByService(SERVICE_UID, {
+      scanMode: 1, // Dummy value for testing
+      matchMode: 1, // Dummy value for testing
+      numberOfMatches: 10, // Dummy value for testing
+      reportDelay: 0,
+    })
+      .then(success => console.log('BLE: Scan Started Successfully', success))
+      .catch(error => console.log('BLE: Scan Start Error', error));
+
+    // Stop scan after scanDuration ms
+    const timer = setTimeout(() => {
+      deviceListener.remove();
+      this.stopScan();
+      if (onScanComplete) onScanComplete(foundStudents);
+    }, scanDuration);
+
+    return this.currentScanStopFunction;
+  }
+
+  /**
+   * Stop current BLE scanning.
+   */
+  public stopScan(): void {
+    if (!this.isScanning) {
+      console.warn('BLE: No active scan to stop');
+      return;
+    }
+
+    BLEAdvertiser.stopScan()
+      .then(success => console.log('BLE: Stop Scan Successful', success))
+      .catch(error => console.log('BLE: Stop Scan Error', error));
+
+    this.isScanning = false;
+    this.currentScanStopFunction = null;
+  }
+
+  /**
+   * Get current scanning status.
+   */
+  public getScanningStatus(): boolean {
+    return this.isScanning;
   }
 }
 
