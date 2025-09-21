@@ -10,6 +10,7 @@ const SERVICE_UID = '0000feed-0000-1000-8000-00805f9b34fb';
 // Types
 export interface BLEPayload {
   id: number;
+  name?: string;
 }
 export interface BLEAdvertisingOptions {
   serviceUid?: string;
@@ -27,12 +28,21 @@ export type OnScanCompleteCallback = (foundStudents: DeviceData[]) => void;
 
 /*eslint-disable no-bitwise */
 function makePayloadBytes(payload: BLEPayload): number[] {
-  const { id } = payload;
+  const { id, name } = payload;
   if (!Number.isInteger(id) || id < 0 || id > 0xffffffff) {
     throw new Error('Payload ID must be a 32-bit unsigned integer');
   }
-  // Build big-endian 4 bytes
-  return [(id >>> 24) & 0xff, (id >>> 16) & 0xff, (id >>> 8) & 0xff, id & 0xff];
+  
+  // Build big-endian 4 bytes for ID
+  const idBytes = [(id >>> 24) & 0xff, (id >>> 16) & 0xff, (id >>> 8) & 0xff, id & 0xff];
+  
+  // Add name bytes if provided (up to 8 bytes to fit in 12 total)
+  if (name) {
+    const nameBytes = Array.from(Buffer.from(name, 'utf8')).slice(0, 8);
+    return [...idBytes, ...nameBytes];
+  }
+  
+  return idBytes;
 }
 
 // Pack up to 12 bytes into the UUID's last bytes
@@ -251,14 +261,22 @@ export class BLE {
             if (unpackedBytes.length >= 4) {
               // eslint-disable-next-line no-bitwise
               const id = (unpackedBytes[0] << 24) | (unpackedBytes[1] << 16) | (unpackedBytes[2] << 8) | unpackedBytes[3];
-              const decodedPayload = { id };
+              
+              // Extract name if present
+              let name: string | undefined;
+              if (unpackedBytes.length > 4) {
+                const nameBytes = unpackedBytes.slice(4);
+                name = Buffer.from(nameBytes).toString('utf8');
+              }
+              
+              const decodedPayload = { id, name };
               
               // Verify the payload matches expected
-              if (decodedPayload.id === expectedPayload.id) {
+              if (decodedPayload.id === expectedPayload.id && decodedPayload.name === expectedPayload.name) {
                 console.log('BLE: ✅ Payload verification successful:', decodedPayload);
                 return true;
               } else {
-                console.log('BLE: ❌ Payload mismatch. Expected:', expectedPayload.id, 'Got:', decodedPayload.id);
+                console.log('BLE: ❌ Payload mismatch. Expected:', expectedPayload, 'Got:', decodedPayload);
                 return false;
               }
             }
@@ -370,12 +388,20 @@ export class BLE {
                 const unpackedBytes = unpackFromUuid(uuid);
                 console.log('BLE: Unpacked bytes from UUID:', unpackedBytes);
                 
-                // Convert bytes back to payload ID (big-endian)
+                // Convert bytes back to payload ID and name
                 if (unpackedBytes.length >= 4) {
                   // eslint-disable-next-line no-bitwise
                   const id = (unpackedBytes[0] << 24) | (unpackedBytes[1] << 16) | (unpackedBytes[2] << 8) | unpackedBytes[3];
-                  decodedPayload = { id };
-                  console.log('BLE: Decoded payload ID:', id);
+                  
+                  // Extract name if present (bytes 4+)
+                  let name: string | undefined;
+                  if (unpackedBytes.length > 4) {
+                    const nameBytes = unpackedBytes.slice(4);
+                    name = Buffer.from(nameBytes).toString('utf8');
+                  }
+                  
+                  decodedPayload = { id, name };
+                  console.log('BLE: Decoded payload:', { id, name });
                 }
               } catch (decodeError) {
                 console.error('BLE: Failed to decode payload from UUID:', decodeError);
@@ -387,14 +413,25 @@ export class BLE {
         
         if (decodedPayload) {
           deviceData.decodedPayload = decodedPayload;
+          console.log('BLE: ✅ Device with valid payload:', {
+            id: deviceData.id,
+            name: deviceData.name,
+            payload: decodedPayload,
+            rssi: deviceData.rssi
+          });
+          
+          if (!seenIds.has(device.id)) {
+            foundStudents.push(deviceData);
+            seenIds.add(device.id);
+            if (onStudentFound) onStudentFound(deviceData);
+          }
         } else {
-          console.log('BLE: ⚠️ Device does not have our packed UUID');
-        }
-
-        if (!seenIds.has(device.id)) {
-          foundStudents.push(deviceData);
-          seenIds.add(device.id);
-          if (onStudentFound) onStudentFound(deviceData);
+          console.log('BLE: ⚠️ Device without our payload:', {
+            id: deviceData.id,
+            name: deviceData.name,
+            serviceUUIDs: deviceData.serviceUUIDs,
+            rssi: deviceData.rssi
+          });
         }
       },
     );

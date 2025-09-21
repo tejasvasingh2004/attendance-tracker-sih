@@ -83,9 +83,12 @@ export default function Temp() {
       BLE.scanForStudentAttendance(
         (deviceData: DeviceData) => {
           setDetectedDevices(prev => [...prev, deviceData]);
+          const payloadInfo = deviceData.decodedPayload 
+            ? ` (ID: ${deviceData.decodedPayload.id}${deviceData.decodedPayload.name ? `, Name: ${deviceData.decodedPayload.name}` : ''})`
+            : '';
           setScanMessages(prev => [
             ...prev,
-            `✅ Found student device: ${deviceData.id}`,
+            `✅ Found student device: ${deviceData.id}${payloadInfo}`,
           ]);
         },
         (foundStudents: DeviceData[]) => {
@@ -119,8 +122,9 @@ export default function Temp() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>BLE Testing</Text>
+    <View style={styles.wrapper}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={true}>
+        <Text style={styles.title}>BLE Testing</Text>
 
       {/* Advertising Section */}
       <View style={styles.section}>
@@ -177,24 +181,39 @@ export default function Temp() {
           >
             {detectedDevices.map((device, index) => (
               <View key={index} style={styles.deviceItem}>
-                <Text style={styles.deviceText}>ID: {device.id}</Text>
+                <Text style={styles.deviceText}>Device ID: {device.id}</Text>
                 {device.name && (
-                  <Text style={styles.deviceText}>Name: {device.name}</Text>
+                  <Text style={styles.deviceText}>Device Name: {device.name}</Text>
+                )}
+                {device.decodedPayload && (
+                  <View style={styles.payloadContainer}>
+                    <Text style={styles.payloadTitle}>📡 Broadcasted Data:</Text>
+                    <Text style={styles.payloadText}>ID: {device.decodedPayload.id}</Text>
+                    {device.decodedPayload.name && (
+                      <Text style={styles.payloadText}>Name: {device.decodedPayload.name}</Text>
+                    )}
+                  </View>
+                )}
+                {device.rssi && (
+                  <Text style={styles.rssiText}>Signal: {device.rssi} dBm</Text>
                 )}
               </View>
             ))}
           </ScrollView>
         </View>
       )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 20,
     backgroundColor: 'white',
+  },
+  container: {
+    padding: 20,
   },
   title: {
     fontSize: 24,
@@ -230,7 +249,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   logContainer: {
-    maxHeight: 150,
+    maxHeight: 250,
     backgroundColor: '#fff',
     borderRadius: 5,
     padding: 10,
@@ -243,7 +262,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   deviceContainer: {
-    maxHeight: 120,
+    maxHeight: 300,
     backgroundColor: '#fff',
     borderRadius: 5,
     padding: 10,
@@ -262,5 +281,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     fontWeight: '500',
+  },
+  payloadContainer: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#137fec',
+  },
+  payloadTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#137fec',
+    marginBottom: 4,
+  },
+  payloadText: {
+    fontSize: 13,
+    color: '#137fec',
+    fontWeight: '500',
+  },
+  rssiText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });
