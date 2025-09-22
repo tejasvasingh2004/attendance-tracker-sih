@@ -87,7 +87,7 @@ export class BLE {
   public isSupported(): boolean {
     return Platform.OS === 'android' && !!BLEAdvertiser;
   }
-chr
+
   /**
    * Start advertising with payload
    */
