@@ -1,21 +1,143 @@
 buildscript {
     ext {
-        buildToolsVersion = "36.0.0"
+        buildToolsVersion = "34.0.0"
         minSdkVersion = 24
-        compileSdkVersion = 36
-        targetSdkVersion = 36
-        ndkVersion = "27.1.12297006"
-        kotlinVersion = "2.1.20"
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+
+        ndkVersion = "26.1.10909125"
+        kotlinVersion = "1.9.24"
+
+        androidGradlePluginVersion = "8.1.1"
     }
+
     repositories {
         google()
         mavenCentral()
     }
+
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:${androidGradlePluginVersion}")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
     }
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+def requiredJavaVersion = (findProperty("requiredJavaVersion") ?: "17").toInteger()
+def projCompileSdk = (findProperty("compileSdkVersion") ?: compileSdkVersion ?: "34").toInteger()
+def projTargetSdk = (findProperty("targetSdkVersion") ?: targetSdkVersion ?: "34").toInteger()
+def projMinSdk = (findProperty("minSdkVersion") ?: minSdkVersion ?: "24").toInteger()
+def projBuildTools = (findProperty("buildToolsVersion") ?: buildToolsVersion ?: "34.0.0")
+
+subprojects { proj ->
+    proj.plugins.withType(org.gradle.api.plugins.JavaPlugin) {
+        proj.extensions.findByName("java")?.with {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(requiredJavaVersion)
+            }
+        }
+    }
+
+    // Configure Android application modules safely
+    proj.plugins.withId("com.android.application") {
+        def androidExt = proj.extensions.getByName("android")
+        try {
+            androidExt.compileSdk = projCompileSdk
+        } catch (ignored) { }
+        try {
+            androidExt.compileSdkVersion projCompileSdk
+        } catch (ignored) { }
+        try {
+            androidExt.compileOptions {
+                if (requiredJavaVersion == 17) {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                } else if (requiredJavaVersion == 11) {
+                    sourceCompatibility = JavaVersion.VERSION_11
+                    targetCompatibility = JavaVersion.VERSION_11
+                } else {
+                    sourceCompatibility = JavaVersion.toVersion(requiredJavaVersion)
+                    targetCompatibility = JavaVersion.toVersion(requiredJavaVersion)
+                }
+            }
+        } catch (ignored) { }
+        try {
+            androidExt.kotlinOptions { jvmTarget = "${requiredJavaVersion}" }
+        } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdk = projMinSdk
+                targetSdk = projTargetSdk
+            }
+        } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdkVersion projMinSdk
+                targetSdkVersion projTargetSdk
+            }
+        } catch (ignored) { }
+    }
+
+    // Configure Android library modules safely
+    proj.plugins.withId("com.android.library") {
+        def androidExt = proj.extensions.getByName("android")
+        try {
+            androidExt.compileSdk = projCompileSdk
+        } catch (ignored) { }
+        try {
+            androidExt.compileSdkVersion projCompileSdk
+        } catch (ignored) { }
+        try {
+            androidExt.compileOptions {
+                if (requiredJavaVersion == 17) {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                } else if (requiredJavaVersion == 11) {
+                    sourceCompatibility = JavaVersion.VERSION_11
+                    targetCompatibility = JavaVersion.VERSION_11
+                } else {
+                    sourceCompatibility = JavaVersion.toVersion(requiredJavaVersion)
+                    targetCompatibility = JavaVersion.toVersion(requiredJavaVersion)
+                }
+            }
+        } catch (ignored) { }
+        try {
+            androidExt.kotlinOptions { jvmTarget = "${requiredJavaVersion}" }
+        } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdk = projMinSdk
+                targetSdk = projTargetSdk
+            }
+        } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdkVersion projMinSdk
+                targetSdkVersion projTargetSdk
+            }
+        } catch (ignored) { }
+    }
+
+}
+
+project(":react-native-ble-advertiser") { p ->
+    p.plugins.withId("com.android.library") {
+        def androidExt = p.extensions.getByName("android")
+        try { androidExt.compileSdk = projCompileSdk } catch (ignored) { }
+        try { androidExt.compileSdkVersion projCompileSdk } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdk = projMinSdk
+                targetSdk = projTargetSdk
+            }
+        } catch (ignored) { }
+        try {
+            androidExt.defaultConfig {
+                minSdkVersion projMinSdk
+                targetSdkVersion projTargetSdk
+            }
+        } catch (ignored) { }
+    }
+}

@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
+  TextInput,
   Alert,
   ScrollView,
 } from 'react-native';
@@ -13,8 +14,17 @@ export default function Temp() {
   const advertisingRef = useRef(false);
   const [messages, setMessages] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [enrollment, setEnrollment] = useState<string>('');
   const [devices, setDevices] = useState<
-    Record<string, { id: string; name: string | null; rssi: number | null; payload?: BLEPayload | null }>
+    Record<
+      string,
+      {
+        id: string;
+        name: string | null;
+        rssi: number | null;
+        payload?: BLEPayload | null;
+      }
+    >
   >({});
 
   useEffect(() => {
@@ -30,13 +40,21 @@ export default function Temp() {
 
   const onStart = useCallback(async () => {
     try {
-      // Check if BLE is supported
       if (!BLE.isSupported()) {
         Alert.alert('Error', 'BLE advertising is not supported on this device');
         return;
       }
 
-      const payload = { id: 1, e: '0801EC241086' };
+      const value = enrollment.trim();
+      if (value.length === 0) {
+        Alert.alert(
+          'Missing Enrollment',
+          'Please enter your enrollment to broadcast.',
+        );
+        return;
+      }
+
+      const payload = { id: 1, e: value };
 
       await BLE.startAdvertising(payload, {
         txPowerLevel: 3,
@@ -66,7 +84,7 @@ export default function Temp() {
       setMessages(prev => [...prev, `❌ Advertising failed: ${errorMessage}`]);
       Alert.alert('Advertise Failed', errorMessage);
     }
-  }, []);
+  }, [enrollment]);
 
   const onStop = useCallback(async () => {
     try {
@@ -145,7 +163,18 @@ export default function Temp() {
           <Text style={styles.sectionTitle}>
             Student Attendance Broadcasting
           </Text>
-          <Text style={styles.infoText}>Payload: ID=1, E="0801EC241086"</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Enrollment (e)"
+            value={enrollment}
+            onChangeText={setEnrollment}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.infoText}>
+            Payload: ID=1{enrollment ? `, E="${enrollment}"` : ''}
+          </Text>
 
           <TouchableOpacity style={styles.button} onPress={onStart}>
             <Text style={styles.buttonText}>Start Broadcasting</Text>
@@ -214,10 +243,16 @@ export default function Temp() {
             showsVerticalScrollIndicator={true}
           >
             {Object.values(devices).map(d => {
-              const payloadStr = d.payload ? ` | Payload → ID=${d.payload.id}${d.payload.e ? `, E=${d.payload.e}` : ''}` : '';
+              const payloadStr = d.payload
+                ? ` | Payload → ID=${d.payload.id}${
+                    d.payload.e ? `, E=${d.payload.e}` : ''
+                  }`
+                : '';
               return (
                 <Text key={d.id} style={styles.logText}>
-                  {`${d.name ?? 'Unknown'} (${d.id}) RSSI: ${d.rssi ?? 'N/A'}${payloadStr}`}
+                  {`${d.name ?? 'Unknown'} (${d.id}) RSSI: ${
+                    d.rssi ?? 'N/A'
+                  }${payloadStr}`}
                 </Text>
               );
             })}
@@ -260,6 +295,15 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 15,
     textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    color: '#333',
   },
   button: {
     padding: 12,

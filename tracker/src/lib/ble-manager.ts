@@ -71,6 +71,7 @@ function base64ToBytes(base64: string): Uint8Array {
       const binary = atob(base64);
       const len = binary.length;
       const bytes = new Uint8Array(len);
+      // eslint-disable-next-line no-bitwise
       for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i) & 0xff;
       return bytes;
     }
@@ -84,10 +85,12 @@ function base64ToBytes(base64: string): Uint8Array {
   for (let i = 0; i < clean.length; i++) {
     const idx = chars.indexOf(clean.charAt(i));
     if (idx < 0 || idx === 64) break;
+    // eslint-disable-next-line no-bitwise
     bs = (bs << 6) | idx;
     bc += 6;
     if (bc >= 8) {
       bc -= 8;
+      // eslint-disable-next-line no-bitwise
       output.push((bs >> bc) & 0xff);
     }
   }
