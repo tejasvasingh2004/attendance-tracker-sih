@@ -66,7 +66,6 @@ function validatePayload(payload: BLEPayload): void {
 }
 
 function base64ToBytes(base64: string): Uint8Array {
-  // Use atob if available (React Native Hermes often provides it). Fallback to manual decode.
   try {
     if (typeof atob === 'function') {
       const binary = atob(base64);
@@ -115,7 +114,16 @@ export class BLE {
     return Platform.OS === 'android' && !!BLEAdvertiser;
   }
 
-  public async startAdvertising(payload: BLEPayload): Promise<void> {
+  public async startAdvertising(
+    payload: BLEPayload,
+    opts?: {
+      txPowerLevel?: 0 | 1 | 2 | 3; // 3 = HIGH
+      advertiseMode?: 0 | 1 | 2; // 2 = LOW_LATENCY
+      includeDeviceName?: boolean;
+      includeTxPowerLevel?: boolean;
+      connectable?: boolean;
+    },
+  ): Promise<void> {
     validatePayload(payload);
 
     if (this.isAdvertising) {
@@ -133,10 +141,11 @@ export class BLE {
         SERVICE_UID,
         Array.from(payloadBytes),
         {
-          txPowerLevel: 2,
-          includeDeviceName: false,
-          includeTxPowerLevel: false,
-          connectable: false,
+          txPowerLevel: opts?.txPowerLevel ?? 3,
+          advertiseMode: opts?.advertiseMode ?? 2,
+          includeDeviceName: opts?.includeDeviceName ?? false,
+          includeTxPowerLevel: opts?.includeTxPowerLevel ?? false,
+          connectable: opts?.connectable ?? false,
         },
       );
 
@@ -224,16 +233,6 @@ export class BLE {
       }
       if (device) {
         try {
-          const hasMfd = !!(device as any).manufacturerData;
-          const sd = (device as any).serviceData as Record<string, string> | null | undefined;
-          const sdKeys = sd ? Object.keys(sd) : [];
-          console.log('[BLE] Scan hit', {
-            id: device.id,
-            name: device.name,
-            rssi: device.rssi,
-            hasManufacturerData: hasMfd,
-            serviceDataKeys: sdKeys,
-          });
           const payload = this.extractPayloadFromDevice(device);
           if (payload) {
             console.log('[BLE] Decoded payload', {
@@ -242,8 +241,6 @@ export class BLE {
               rssi: device.rssi,
               payload,
             });
-          } else {
-            console.log('[BLE] No decodable payload for device', device.id);
           }
         } catch (_e) {}
         onDeviceFound(device);
@@ -285,11 +282,11 @@ export class BLE {
 
   public extractPayloadFromDevice(device: Device): BLEPayload | null {
     try {
-      // Prefer Manufacturer Data: first 2 bytes are company ID (little-endian)
-      const mfd = (device as any).manufacturerData as string | null | undefined;
+      const mfd = (device as Device).manufacturerData as string | null | undefined;
       if (mfd) {
         const bytes = base64ToBytes(mfd);
         if (bytes.length >= 6) {
+          // eslint-disable-next-line no-bitwise
           const companyId = bytes[0] | (bytes[1] << 8);
           if (companyId === COMPANY_ID) {
             const payloadBytes = bytes.slice(2);

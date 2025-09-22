@@ -38,7 +38,13 @@ export default function Temp() {
 
       const payload = { id: 1, e: '0801EC241086' };
 
-      await BLE.startAdvertising(payload);
+      await BLE.startAdvertising(payload, {
+        txPowerLevel: 3,
+        advertiseMode: 2,
+        includeDeviceName: false,
+        includeTxPowerLevel: false,
+        connectable: false,
+      });
       advertisingRef.current = true;
 
       setMessages(prev => [
@@ -85,12 +91,14 @@ export default function Temp() {
           setDevices(prev => {
             const next = { ...prev };
             const payload = BLE.extractPayloadFromDevice(device);
-            next[device.id] = {
-              id: device.id,
-              name: device.name ?? null,
-              rssi: device.rssi ?? null,
-              payload,
-            };
+            if (payload) {
+              next[device.id] = {
+                id: device.id,
+                name: device.name ?? null,
+                rssi: device.rssi ?? null,
+                payload,
+              };
+            }
             return next;
           });
         },
