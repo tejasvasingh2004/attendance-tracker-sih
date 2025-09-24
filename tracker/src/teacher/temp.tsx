@@ -12,6 +12,8 @@ import BLE, { type BLEPayload } from '../lib/ble-manager';
 
 export default function Temp() {
   const advertisingRef = useRef(false);
+  const [txPowerLevel, setTxPowerLevel] = useState<string>('3');
+  const [advertiseMode, setAdvertiseMode] = useState<string>('2');
   const [messages, setMessages] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [enrollment, setEnrollment] = useState<string>('');
@@ -57,8 +59,10 @@ export default function Temp() {
       const payload = { id: 1, e: value };
 
       await BLE.startAdvertising(payload, {
-        txPowerLevel: 3,
-        advertiseMode: 2,
+        // eslint-disable-next-line radix
+        txPowerLevel: parseInt(txPowerLevel) as 0 | 1 | 2 | 3,
+        // eslint-disable-next-line radix
+        advertiseMode: parseInt(advertiseMode) as 0 | 1 | 2,
         includeDeviceName: false,
         includeTxPowerLevel: false,
         connectable: false,
@@ -84,7 +88,7 @@ export default function Temp() {
       setMessages(prev => [...prev, `❌ Advertising failed: ${errorMessage}`]);
       Alert.alert('Advertise Failed', errorMessage);
     }
-  }, [enrollment]);
+  }, [enrollment, advertiseMode, txPowerLevel]);
 
   const onStop = useCallback(async () => {
     try {
@@ -172,6 +176,35 @@ export default function Temp() {
             autoCorrect={false}
             placeholderTextColor="#999"
           />
+          <View
+            style={{
+              flexDirection: 'row',
+              flex: 1,
+              gap: 8,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <TextInput
+              style={{ ...styles.input, flex: 1 }}
+              placeholder="TX: (0 | 1 | 2 | 3)"
+              value={txPowerLevel}
+              onChangeText={setTxPowerLevel}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={{ ...styles.input, flex: 1 }}
+              placeholder="AD: (0 | 1 | 2)"
+              value={advertiseMode}
+              onChangeText={setAdvertiseMode}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              placeholderTextColor="#999"
+            />
+          </View>
+
           <Text style={styles.infoText}>
             Payload: ID=1{enrollment ? `, E="${enrollment}"` : ''}
           </Text>
