@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../prisma/generated"
 }
 
 datasource db {
@@ -34,14 +33,21 @@ model Student {
 
   rollNumber  String       @unique
   year        Int
+  semester    String
   section     String?
   attendances Attendance[]
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student          @relation(fields: [studentId], references: [id])
+  
+  timestamp DateTime         @default(now())
+  sessionId String
+  session   Session          @relation(fields: [sessionId], references: [id])
+  location  String?
+  status    AttendanceStatus @default(PRESENT)
 }
 
 model Teacher {
@@ -50,10 +56,40 @@ model Teacher {
   user   User   @relation(fields: [userId], references: [id])
 
   department String
+  sessions   Session[]
+}
+
+model Session {
+  id         String        @id @default(uuid())
+  title      String
+  subject    String
+  startTime  DateTime
+  endTime    DateTime?
+  teacherId  String
+  teacher    Teacher       @relation(fields: [teacherId], references: [id])
+  isAutoStart Boolean      @default(false)
+  duration   Int?          @default(10)
+  status     SessionStatus @default(SCHEDULED)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  attendances Attendance[]
 }
 
 enum Role {
   ADMIN
   STUDENT
   TEACHER
+}
+
+enum SessionStatus {
+  SCHEDULED
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
 }
