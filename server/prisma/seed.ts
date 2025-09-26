@@ -1,10 +1,9 @@
-import 'dotenv/config'; // <- loads .env automatically
+import 'dotenv/config'; 
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // ----- Create dummy Students -----
   const studentsData = [
     { email: "student1@example.com", name: "John Doe", rollNumber: "STU001", year: 2, section: "A" },
     { email: "student2@example.com", name: "Alice Lee", rollNumber: "STU002", year: 1, section: "B" },
@@ -29,7 +28,6 @@ async function main() {
     console.log("Student created:", student.email);
   }
 
-  // ----- Create dummy Teachers -----
   const teachersData = [
     { email: "teacher1@example.com", name: "Jane Smith", employeeId: "EMP001", department: "Mathematics" },
     { email: "teacher2@example.com", name: "Mark Johnson", employeeId: "EMP002", department: "Physics" },

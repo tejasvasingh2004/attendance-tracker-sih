@@ -1,11 +1,8 @@
-// src/routes/studentRoutes.ts
 import express, { type Request, type Response } from "express";
 import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
-// Define the request body type
 interface SignupRequestBody {
   email: string;
   name: string;
@@ -13,8 +10,6 @@ interface SignupRequestBody {
   year: number;
   section: string;
 }
-
-// POST /api/students/signup
 router.post("/signup", async (req: Request<{}, {}, SignupRequestBody>, res: Response) => {
   try {
     const { email, name, rollNumber } = req.body;
@@ -25,7 +20,6 @@ router.post("/signup", async (req: Request<{}, {}, SignupRequestBody>, res: Resp
       return res.status(400).json({ error: "User already exists with this email" });
     }
 
-    // Create user with student profile
     const user = await prisma.user.create({
       data: {
         email,
