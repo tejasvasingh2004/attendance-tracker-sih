@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../prisma/generated"
+
 }
 
 datasource db {
@@ -45,10 +45,11 @@ model Attendance {
 }
 
 model Teacher {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id         String @id @default(uuid())
+  userId     String @unique
+  user       User   @relation(fields: [userId], references: [id])
 
+  employeeId String @unique
   department String
 }
 

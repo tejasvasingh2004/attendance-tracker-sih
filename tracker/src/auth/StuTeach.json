@@ -1,0 +1,24 @@
+{
+  "students": [
+    {
+      "enrollment": "STU123456789",
+      "email": "student1@example.com",
+      "password": "student123"
+    },
+    {
+      "enrollment": "STU987654321",
+      "email": "student2@example.com",
+      "password": "password2"
+    }
+  ],
+  "teachers": [
+    {
+      "employeeId": "TEA12345",
+      "password": "teacher123"
+    },
+    {
+      "employeeId": "TEA98765",
+      "password": "password2"
+    }
+  ]
+}

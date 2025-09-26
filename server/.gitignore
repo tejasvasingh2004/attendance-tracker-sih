@@ -1,3 +1,32 @@
+# Node modules
+node_modules/
+ode_modules/
+
+# Environment variables
+.env
+
+# Prisma client and generated files
+/prisma/dev.db          # If using SQLite locally
+/prisma/migrations/*.tmp  # Temporary files
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output (if you compile TS to JS)
+dist/
+build/
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# TypeScript build output (if any)
+dist/
+build/
+
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 
 # Logs
