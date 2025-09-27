@@ -1,11 +1,10 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../prisma/generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("ATTENDANCE_DATABASE_URL")
 }
 
 model User {
@@ -32,6 +31,7 @@ model Student {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  hardwareId  String?      @unique
   rollNumber  String       @unique
   year        Int
   section     String?
@@ -39,9 +39,9 @@ model Student {
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Teacher {
@@ -49,6 +49,7 @@ model Teacher {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  employeeId String @unique
   department String
 }
 

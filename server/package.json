@@ -2,19 +2,26 @@
   "name": "server",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun index.ts",
+    "seed": "bun prisma/seed.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
-    "prisma": "6.16.2"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "prisma": "^6.16.2",
+    "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@prisma/client": "6.16.2",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.5.2",
+    "@prisma/client": "^6.16.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
-    "express": "4"
+    "express": "4",
+    "resend": "^6.1.0"
   }
 }

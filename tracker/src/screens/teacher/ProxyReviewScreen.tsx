@@ -137,8 +137,13 @@ function ProxyStudentCard({ student, onShowImage, onRevoke }: { student: ProxySt
 }
 
 interface ProxyReviewScreenProps {
-  session: { startEndTime: string; title: string; details: string; imageUri: string }
-  onBack: () => void
+  session: {
+    startEndTime: string;
+    title: string;
+    details: string;
+    imageUri: string;
+  };
+  onBack: () => void;
 }
 
 export default function ProxyReviewScreen({ session, onBack }: ProxyReviewScreenProps) {

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, Image, TextInput, Animated } from 'react-native'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
-import ProxyAlertModal from './components/ProxyAlertModal'
+import ProxyAlertModal from '../../components/modals/ProxyAlertModal'
 import ProxyReviewScreen from './ProxyReviewScreen'
 
 type Student = {
