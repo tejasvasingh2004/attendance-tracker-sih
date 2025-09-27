@@ -1,20 +1,16 @@
 import { Platform } from 'react-native';
 import BLEAdvertiser from 'react-native-ble-advertiser';
-import PermissionManager from './permission-manager';
 import {
   BleManager,
   Device,
   State as BluetoothState,
   type UUID,
 } from 'react-native-ble-plx';
+import PermissionManager from '../permissions/permissionManager';
+import { BLEPayload, BLEAdvertisingOptions, BLEScanOptions } from './types';
 
 const SERVICE_UID = '0000feed-0000-1000-8000-00805f9b34fb';
 const COMPANY_ID = 0xffff;
-
-export interface BLEPayload {
-  id: number;
-  e?: string;
-}
 
 function stringToBytes(str: string): Uint8Array {
   const bytes = new Uint8Array(str.length);
@@ -35,7 +31,6 @@ function makePayloadBytes(payload: BLEPayload): Uint8Array {
   }
 
   const eBytes = e ? stringToBytes(e) : new Uint8Array(0);
-
   const buffer = new Uint8Array(4 + eBytes.length);
   const view = new DataView(buffer.buffer);
 
@@ -97,20 +92,19 @@ function base64ToBytes(base64: string): Uint8Array {
   return new Uint8Array(output);
 }
 
-export class BLE {
-  private static instance: BLE;
+export class BLEManager {
+  private static instance: BLEManager;
   private isAdvertising: boolean = false;
   private currentPayload: BLEPayload | null = null;
-
   private bleManager: BleManager | null = null;
   private isScanning: boolean = false;
   private scanTimeoutId: number | null = null;
 
   private constructor() {}
 
-  public static getInstance(): BLE {
-    if (!BLE.instance) BLE.instance = new BLE();
-    return BLE.instance;
+  public static getInstance(): BLEManager {
+    if (!BLEManager.instance) BLEManager.instance = new BLEManager();
+    return BLEManager.instance;
   }
 
   public isSupported(): boolean {
@@ -119,13 +113,7 @@ export class BLE {
 
   public async startAdvertising(
     payload: BLEPayload,
-    opts?: {
-      txPowerLevel?: 0 | 1 | 2 | 3; // 3 = HIGH
-      advertiseMode?: 0 | 1 | 2; // 2 = LOW_LATENCY
-      includeDeviceName?: boolean;
-      includeTxPowerLevel?: boolean;
-      connectable?: boolean;
-    },
+    options: BLEAdvertisingOptions = {}
   ): Promise<void> {
     validatePayload(payload);
 
@@ -144,11 +132,11 @@ export class BLE {
         SERVICE_UID,
         Array.from(payloadBytes),
         {
-          txPowerLevel: opts?.txPowerLevel ?? 3,
-          advertiseMode: opts?.advertiseMode ?? 2,
-          includeDeviceName: opts?.includeDeviceName ?? false,
-          includeTxPowerLevel: opts?.includeTxPowerLevel ?? false,
-          connectable: opts?.connectable ?? false,
+          txPowerLevel: options.txPowerLevel ?? 3,
+          advertiseMode: options.advertiseMode ?? 2,
+          includeDeviceName: options.includeDeviceName ?? false,
+          includeTxPowerLevel: options.includeTxPowerLevel ?? false,
+          connectable: options.connectable ?? false,
         },
       );
 
@@ -221,7 +209,7 @@ export class BLE {
   public async startScan(
     onDeviceFound: (device: Device) => void,
     uuids: UUID[] | null = null,
-    options?: { legacyScan?: boolean },
+    options: BLEScanOptions = {},
     timeoutMs?: number,
   ): Promise<void> {
     if (this.isScanning) return;
@@ -229,7 +217,10 @@ export class BLE {
     const manager = this.ensureBleManager();
 
     this.isScanning = true;
-    manager.startDeviceScan(uuids, { legacyScan: options?.legacyScan, allowDuplicates: true }, (error, device) => {
+    manager.startDeviceScan(uuids, { 
+      legacyScan: options.legacyScan, 
+      allowDuplicates: true 
+    }, (error, device) => {
       if (error) {
         this.stopScan();
         return;
@@ -320,5 +311,4 @@ export class BLE {
   }
 }
 
-const bleInstance = BLE.getInstance();
-export default bleInstance;
+export default BLEManager.getInstance();

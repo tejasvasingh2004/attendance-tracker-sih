@@ -24,6 +24,20 @@ router.post(
     try {
       const { email, name, rollNumber, year, section, hardwareId } = req.body;
 
+      // Validate required fields
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      if (!name) {
+        return res.status(400).json({ error: "Name is required" });
+      }
+      if (!rollNumber) {
+        return res.status(400).json({ error: "Roll number is required" });
+      }
+      if (!hardwareId) {
+        return res.status(400).json({ error: "Hardware ID is required" });
+      }
+
       const existingEmail = await prisma.user.findUnique({ where: { email } });
       if (existingEmail) {
         return res
@@ -86,11 +100,15 @@ router.post(
   "/login",
   async (req: Request<{}, {}, LoginRequestBody>, res: Response) => {
     try {
-      console.log("USER", req.body);
-
       const { email, hardwareId } = req.body;
 
-      console.log("Login request:", email, hardwareId);
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      if (!hardwareId) {
+        return res.status(400).json({ error: "Hardware ID is required" });
+      }
+
 
       const user = await prisma.user.findUnique({
         where: { email },

@@ -1,15 +1,10 @@
+/**
+ * Permission Manager
+ * Centralized permission handling for Android devices
+ */
+
 import { Platform, PermissionsAndroid, Permission } from 'react-native';
-
-// Permission Types
-export interface PermissionResult {
-  granted: boolean;
-  deniedPermissions: string[];
-}
-
-export interface PermissionGroup {
-  name: string;
-  permissions: string[];
-}
+import { PermissionResult, PermissionGroup } from './types';
 
 export const PERMISSION_GROUPS = {
   BLUETOOTH: {
@@ -37,7 +32,6 @@ export const PERMISSION_GROUPS = {
   },
 } as const;
 
-// Permission Manager Class
 export class PermissionManager {
   private static instance: PermissionManager;
 
@@ -116,54 +110,6 @@ export class PermissionManager {
       return results.every(status => status === true);
     } catch (error) {
       console.error(`Error checking ${group.name} permissions:`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Request individual permissions
-   */
-  public async requestPermissions(permissions: string[]): Promise<PermissionResult> {
-    if (Platform.OS !== 'android') {
-      return { granted: true, deniedPermissions: [] };
-    }
-
-    try {
-      const results = await PermissionsAndroid.requestMultiple(
-        permissions as Permission[]
-      );
-      
-      const deniedPermissions = Object.entries(results)
-        .filter(([_, status]) => status !== 'granted')
-        .map(([permission]) => permission);
-
-      return {
-        granted: deniedPermissions.length === 0,
-        deniedPermissions,
-      };
-    } catch (error) {
-      throw new Error(`Failed to request permissions: ${error}`);
-    }
-  }
-
-  /**
-   * Check individual permissions
-   */
-  public async checkPermissions(permissions: string[]): Promise<boolean> {
-    if (Platform.OS !== 'android') {
-      return true;
-    }
-
-    try {
-      const results = await Promise.all(
-        permissions.map(permission => 
-          PermissionsAndroid.check(permission as Permission)
-        )
-      );
-      
-      return results.every(status => status === true);
-    } catch (error) {
-      console.error('Error checking permissions:', error);
       return false;
     }
   }
