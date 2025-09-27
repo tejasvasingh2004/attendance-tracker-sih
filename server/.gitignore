@@ -8,6 +8,7 @@ ode_modules/
 # Prisma client and generated files
 /prisma/dev.db          # If using SQLite locally
 /prisma/migrations/*.tmp  # Temporary files
+prisma/migrations/*/migration_lock.toml
 
 # Logs
 npm-debug.log*

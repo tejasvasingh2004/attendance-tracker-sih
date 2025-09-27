@@ -15,7 +15,7 @@ const TeacherLogin = ({ navigation }: any) => {
     }),
     onSubmit: values => {
       console.log('Logging in with:', values);
-      // Call backend API to validate Email + Employee ID and send OTP via Resend
+
     },
   });
 
@@ -23,7 +23,6 @@ const TeacherLogin = ({ navigation }: any) => {
     <View style={styles.container}>
       <Text style={styles.title}>Teacher Login</Text>
 
-      {/* Email */}
       <View style={styles.inputContainer}>
         <Icon name="email" size={24} style={styles.icon} />
         <TextInput
@@ -40,7 +39,6 @@ const TeacherLogin = ({ navigation }: any) => {
         <Text style={styles.errorText}>{formik.errors.email}</Text>
       )}
 
-      {/* Employee ID */}
       <View style={styles.inputContainer}>
         <Icon name="badge" size={24} style={styles.icon} />
         <TextInput
@@ -62,7 +60,6 @@ const TeacherLogin = ({ navigation }: any) => {
         <Text style={styles.buttonText}>Send OTP</Text>
       </TouchableOpacity>
 
-      {/* Navigation to Student Login */}
       <Text style={styles.signUp}>
         Want to Login as a Student?{' '}
         <Text

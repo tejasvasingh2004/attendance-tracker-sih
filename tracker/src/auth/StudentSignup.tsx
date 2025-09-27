@@ -1,17 +1,29 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import DeviceInfo from 'react-native-device-info';
 
 type StudentSignupProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
 const StudentSignup = ({ navigation }: StudentSignupProps) => {
+  const [deviceId, setDeviceId] = useState('');
+
+  useEffect(() => {
+    const fetchDeviceId = async () => {
+      const id = await DeviceInfo.getUniqueId();
+      setDeviceId(id);
+    };
+    fetchDeviceId();
+  }, []);
+
   const formik = useFormik({
-    initialValues: { name: '', enrollment: '', email: ''},
+    initialValues: { name: '', enrollment: '', email: '' },
     validationSchema: Yup.object({
       name: Yup.string().required('Name is required'),
       enrollment: Yup.string()
@@ -19,9 +31,25 @@ const StudentSignup = ({ navigation }: StudentSignupProps) => {
         .required('Enrollment is required'),
       email: Yup.string().email('Invalid email address').required('Email is required'),
     }),
-    onSubmit: values => {
-      console.log('Signing up with:', values);
-      navigation.navigate('StudentLogin'); 
+    onSubmit: async values => {
+      try {
+        const res = await axios.post("http://10.0.2.2:3000/api/students/signup", {
+          email: values.email,
+          name: values.name,
+          rollNumber: values.enrollment,
+          year: 2025,
+          section: "A",
+          hardwareId: deviceId
+        });
+
+        Alert.alert("Success", res.data.message);
+        console.log("User created:", res.data.user);
+
+        navigation.navigate('StudentLogin');
+      } catch (error: any) {
+        console.error("Signup error:", error.response?.data || error.message);
+        Alert.alert("Error", error.response?.data?.error || "Something went wrong");
+      }
     },
   });
 
