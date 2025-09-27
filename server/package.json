@@ -3,8 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "node --loader ts-node/esm index.ts",
-    "seed": "node --loader ts-node/esm prisma/seed.ts"
+    "dev": "bun index.ts",
+    "seed": "bun prisma/seed.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -12,7 +12,6 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.5.2",
     "prisma": "^6.16.2",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
