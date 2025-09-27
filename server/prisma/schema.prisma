@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-
 }
 
 datasource db {
@@ -12,8 +11,6 @@ model User {
   id    String @id @default(uuid())
   email String @unique
   role  Role
-
-  hardwareId String? @unique
 
   name      String?
   createdAt DateTime @default(now())
@@ -34,6 +31,7 @@ model Student {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  hardwareId  String?      @unique
   rollNumber  String       @unique
   year        Int
   section     String?
@@ -41,15 +39,15 @@ model Student {
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Teacher {
-  id         String @id @default(uuid())
-  userId     String @unique
-  user       User   @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
   employeeId String @unique
   department String
