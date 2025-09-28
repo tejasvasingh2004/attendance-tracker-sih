@@ -1,7 +1,7 @@
 import { SessionStatus } from '@prisma/client';
 import type { Request, Response } from 'express';
 import type { Session as PrismaSession } from '@prisma/client';
-import { prisma } from '../prisma/client';
+import { prisma } from '../../prisma/client';
 
 /**
  * Record individual attendance from BLE scan data
