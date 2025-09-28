@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("ATTENDANCE_DATABASE_URL")
 }
 
 model User {
@@ -31,6 +31,7 @@ model Student {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  hardwareId  String?      @unique
   rollNumber  String       @unique
   year        Int
   semester    String
@@ -39,16 +40,15 @@ model Student {
 }
 
 model Attendance {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
-  
+  student   Student @relation(fields: [studentId], references: [id])
+
   timestamp DateTime @default(now())
   sessionId String
   session   Session  @relation(fields: [sessionId], references: [id])
 
- 
-  isPresent Boolean  @default(false)  // true = present, false = absent
+  isPresent Boolean @default(false) // true = present, false = absent
 }
 
 model Teacher {
@@ -56,23 +56,24 @@ model Teacher {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
+  employeeId String    @unique
   department String
   sessions   Session[]
 }
 
 model Session {
-  id         String        @id @default(uuid())
-  title      String
-  subject    String
-  startTime  DateTime
-  endTime    DateTime?
-  teacherId  String
-  teacher    Teacher       @relation(fields: [teacherId], references: [id])
-  isAutoStart Boolean      @default(false)
-  duration   Int?          @default(10)
-  status     SessionStatus @default(SCHEDULED)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id          String        @id @default(uuid())
+  title       String
+  subject     String
+  startTime   DateTime
+  endTime     DateTime?
+  teacherId   String
+  teacher     Teacher       @relation(fields: [teacherId], references: [id])
+  isAutoStart Boolean       @default(false)
+  duration    Int?          @default(10)
+  status      SessionStatus @default(SCHEDULED)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   attendances Attendance[]
 }
 
@@ -88,4 +89,3 @@ enum SessionStatus {
   ENDED
   CANCELLED
 }
-

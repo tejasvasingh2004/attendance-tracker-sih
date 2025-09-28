@@ -1,72 +1,23 @@
 import * as React from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-// import AttendanceScreen from './src/teacher/AttendanceScreen';
-// import TeacherHome from './src/teacher/Home';
-// import PhotoUploadScreen from './src/teacher/PhotoUploadScreen';
-// import ProxyReviewScreen from './src/teacher/ProxyReviewScreen';
-import Temp from './src/teacher/temp';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { AuthScreen } from './src/screens/auth';
+import { TeacherHome } from './src/screens/teacher';
+import { enableScreens } from 'react-native-screens';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+enableScreens();
+const Stack = createNativeStackNavigator();
 
+export default function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="AuthScreen">
+          <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ headerShown: false }}/>
+          <Stack.Screen name="TeacherHome" component={TeacherHome} options={{ headerShown: false }}/>
+        </Stack.Navigator>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
-
-// type Session = {
-//   startEndTime: string;
-//   title: string;
-//   details: string;
-//   imageUri: string;
-// };
-
-function AppContent() {
-  // const [route, setRoute] = React.useState<
-  //   'home' | 'photo' | 'attendance' | 'proxy'
-  // >('home');
-  // const [currentSession, setCurrentSession] = React.useState<Session | null>(
-  //   null,
-  // );
-
-  // const goHome = () => {
-  //   setRoute('home');
-  //   setCurrentSession(null);
-  // };
-  // const startPhoto = (session: Session) => {
-  //   setCurrentSession(session);
-  //   setRoute('photo');
-  // };
-
-  return (
-    <Temp />
-    // <View style={styles.container}>
-    //   {route === 'home' && <TeacherHome onStartAttendance={startPhoto} />}
-    //   {route === 'photo' && currentSession && (
-    //     <PhotoUploadScreen session={currentSession} onBack={goHome} />
-    //   )}
-    //   {route === 'attendance' && currentSession && (
-    //     <AttendanceScreen
-    //       session={currentSession}
-    //       onBack={goHome}
-    //       onTakeProxyAction={() => setRoute('proxy')}
-    //     />
-    //   )}
-    //   {route === 'proxy' && currentSession && (
-    //     <ProxyReviewScreen session={currentSession} onBack={goHome} />
-    //   )}
-    // </View>
-  );
-}
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//   },
-// });
-
-export default App;
