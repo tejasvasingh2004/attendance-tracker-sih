@@ -1,16 +1,7 @@
-/**
- * Attendance Controller
- * 
- * Comprehensive attendance management controller with BLE data processing,
- * proxy detection, and full CRUD operations for attendance records.
- */
-
-import { PrismaClient, SessionStatus } from '@prisma/client';
+import { SessionStatus } from '@prisma/client';
 import type { Request, Response } from 'express';
 import type { Session as PrismaSession } from '@prisma/client';
-
-// Initialize Prisma client
-const prisma = new PrismaClient();
+import { prisma } from '../prisma/client';
 
 /**
  * Record individual attendance from BLE scan data

@@ -66,6 +66,7 @@ router.post(
               rollNumber,
               year,
               section,
+              semester: "3",
             },
           },
         },

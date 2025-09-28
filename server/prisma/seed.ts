@@ -21,6 +21,7 @@ async function main() {
             rollNumber: s.rollNumber,
             year: s.year,
             section: s.section,
+            semester: "3",
           },
         },
       },
