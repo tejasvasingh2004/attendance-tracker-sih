@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -8,8 +8,10 @@ import {
   Image,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useGetAttendanceStats } from '../../hooks';
 
 type Session = {
+  id: string;
   startEndTime: string;
   title: string;
   details: string;
@@ -148,6 +150,13 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
     'today',
   );
 
+  const { data: stats, loading: statsLoading, execute: fetchStats } = useGetAttendanceStats();
+
+  useEffect(() => {
+    // Fetch stats for a hardcoded sessionId
+    fetchStats('session-1');
+  }, []);
+
   const onStartAttendance = (session: Session) => {
     navigation.navigate('AttendanceScreen', { session });
   };
@@ -157,6 +166,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
   };
   const upcomingSessions: Session[] = [
     {
+      id: 'session-1',
       startEndTime: '9:00 AM - 10:00 AM',
       title: 'Calculus 101',
       details: 'Class A / Batch 2024',
@@ -164,6 +174,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
         'https://lh3.googleusercontent.com/aida-public/AB6AXuAE-Nx2SEwmZUJ42XKUkBjO5OLvssS3yikEpncv7jTEkHHJcN3S1dD0iLZkdUFO7HzQp8errahWprB39G8GPu1ifCUDPMpBOy-JVOWRuPBj9YdpVygnG5pZPu1ONth1-Hy16v23eOJbaVH_ndGDVxQeKzaLBlkKqWNk1c_OQ-M8hDEuZSvfcwwMgFpZ6w15yiSbD18xk0TzvH_R1mPAMKk4Kuw2_dmS48jyTsRvaWPjoaprSWgJFZI6wTn1bOTUkdSNHhTuY6yr3Rs6',
     },
     {
+      id: 'session-2',
       startEndTime: '11:00 AM - 12:00 PM',
       title: 'Physics 202',
       details: 'Class B / Batch 2025',
@@ -357,7 +368,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
               <View style={{ gap: 20, paddingHorizontal: 24 }}>
                 {upcomingSessions.map(s => (
                   <SessionCard
-                    key={s.title}
+                    key={s.id}
                     session={s}
                     onStartAttendance={onStartAttendance}
                   />
@@ -502,7 +513,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                           color: '#0f172a',
                         }}
                       >
-                        30
+                        {stats?.statistics?.total || 30}
                       </Text>
                     </View>
                     <View
@@ -536,7 +547,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                           color: '#166534',
                         }}
                       >
-                        28
+                        {stats?.statistics?.present || 28}
                       </Text>
                     </View>
                     <View
@@ -570,7 +581,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                           color: '#b91c1c',
                         }}
                       >
-                        2
+                        {stats?.statistics?.absent || 2}
                       </Text>
                     </View>
                   </View>

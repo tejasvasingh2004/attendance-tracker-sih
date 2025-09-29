@@ -6,3 +6,4 @@
 export * from './useApi';
 export * from './useAuth';
 export * from './useBLE';
+export * from './useAttendance';
