@@ -15,7 +15,7 @@ import {
   updateAttendance,
   deleteAttendance,
   getAttendanceStats
-} from '../controller/attendanceController';
+} from '../controller/attendance';
 
 const router = express.Router();
 

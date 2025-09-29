@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import studentRoutes from "./routes/index.ts";
 import otpRoutes from "./routes/otp/index.ts";
+import attendanceRouter from "./routes/attendanceRoutes.ts";
 const app = express();
 
 app.use(
@@ -34,6 +35,7 @@ app.get("/health", (req, res) => res.send("Server is healthy"));
 
 app.use("/api/students", studentRoutes);
 app.use("/api/otp", otpRoutes);
+app.use("/api/attendance", attendanceRouter);
 
 app.listen(config.port, () => {
   console.log(`Server running at http://localhost:${config.port}`);
