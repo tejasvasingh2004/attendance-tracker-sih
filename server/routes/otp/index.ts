@@ -35,9 +35,9 @@ interface ResendOTPRequest {
 
 // Constants
 const OTP_EXPIRY_MINUTES = 5;
-const MAX_OTP_ATTEMPTS = 3;
+const MAX_OTP_ATTEMPTS = 10;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_OTP_REQUESTS_PER_WINDOW = 5;
+const MAX_OTP_REQUESTS_PER_WINDOW = 10;
 const OTP_LENGTH = 6;
 
 const generateSecureOTP = (): string => {
@@ -102,8 +102,7 @@ const logOTPOperation = (
   const timestamp = new Date().toISOString();
   const status = success ? "SUCCESS" : "FAILED";
   console.log(
-    `[${timestamp}] OTP_${operation}_${status} - UserId: ${userId}${
-      email ? `, Email: ${email}` : ""
+    `[${timestamp}] OTP_${operation}_${status} - UserId: ${userId}${email ? `, Email: ${email}` : ""
     }`
   );
 };
@@ -206,8 +205,6 @@ router.post(
         req.body.email,
         false
       );
-
-      // Don't expose internal errors to client
       res.status(500).json({
         error: "Failed to generate OTP. Please try again.",
         code: "INTERNAL_SERVER_ERROR",
@@ -290,13 +287,15 @@ router.post(
         });
       }
 
-      // OTP verified successfully
+
       otpStore.delete(userId);
       logOTPOperation("VERIFY", userId, record.email, true);
+
       res.json({
         message: "OTP verified successfully",
         verifiedAt: new Date().toISOString(),
       });
+
     } catch (error: any) {
       console.error("OTP verification error:", error);
       logOTPOperation("VERIFY", req.body.userId || "unknown", undefined, false);
@@ -350,8 +349,6 @@ router.post(
           code: "OTP_NOT_FOUND",
         });
       }
-
-      // Check if OTP has expired
       if (Date.now() > record.expiresAt) {
         otpStore.delete(userId);
         logOTPOperation("RESEND", userId, record.email, false);
@@ -369,7 +366,7 @@ router.post(
         ...record,
         otp: newOtp,
         expiresAt,
-        attempts: 0, // Reset attempts for new OTP
+        attempts: 0, 
       });
 
       // Send email

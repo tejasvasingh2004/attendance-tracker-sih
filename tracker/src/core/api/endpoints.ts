@@ -2,7 +2,6 @@
  * API Endpoints
  * Centralized endpoint definitions and API service methods
  */
-
 import { api } from './client';
 import {
   StudentLoginResponse,

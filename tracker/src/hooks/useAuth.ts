@@ -8,6 +8,7 @@ import { Alert } from 'react-native';
 import { studentApi, otpApi } from '../core/api/endpoints';
 import { handleApiError } from '../core/api/client';
 import { StudentSignupRequest } from '../core/api/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Hook specifically for OTP operations
@@ -30,26 +31,28 @@ export function useOTP() {
     }
   }, []);
 
-  const verifyOTP = useCallback(async (userId: string, otp: string) => {
-    setLoading(true);
-    try {
-      const result = await otpApi.verify(userId, otp);
+const verifyOTP = useCallback(async (userId: string, otp: string) => {
+  setLoading(true);
+  try {
+    const result = await otpApi.verify(userId, otp);
 
-      if (result.message === 'OTP verified successfully') {
-        Alert.alert('Success', result.message);
-        return result;
-      } else {
-        Alert.alert('Error', result.message || 'OTP verification failed.');
-        return null;
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      Alert.alert('Error', 'OTP verification failed.');
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
+    if (result.message === 'OTP verified successfully' && result.token) {
+      await AsyncStorage.setItem('jwtToken', result.token);
+      Alert.alert('Success', 'OTP verified successfully');
+      return result.token; 
+    } else {
+      Alert.alert('Error', result.message || 'OTP verification failed.');
+      return null;
     }
-  }, []);
+  } catch (error) {
+    const errorMessage = handleApiError(error);
+    Alert.alert('Error', 'OTP verification failed.');
+    throw new Error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   const resendOTP = useCallback(async (userId: string) => {
     setLoading(true);

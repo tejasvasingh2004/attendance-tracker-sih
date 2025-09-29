@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,27 @@ import { useOTP } from '../../hooks/useAuth';
 const OTPScreen = ({ route, navigation }: any) => {
   const { userId, email } = route.params;
   const [otp, setOtp] = useState('');
-  const { verifyOTP, resendOTP, loading } = useOTP();
+  const { verifyOTP, resendOTP, generateOTP, loading } = useOTP();
+
+ useEffect(() => {
+  let isMounted = true;
+
+  const sendOTP = async () => {
+    if (!userId || !email) return;
+    try {
+      if (isMounted) await generateOTP(userId, email);
+    } catch (error) {
+      console.error('Generate OTP Error:', error);
+    }
+  };
+
+  sendOTP();
+
+  return () => {
+    isMounted = false;
+  };
+}, [userId, email, generateOTP]);
+
 
   const handleVerifyOTP = useCallback(async () => {
     if (otp.length !== 6) {
@@ -23,8 +43,7 @@ const OTPScreen = ({ route, navigation }: any) => {
     try {
       const result = await verifyOTP(userId, otp);
       if (result) {
-        // Navigate to appropriate screen after successful verification
-        navigation.navigate('StudentDashboard'); // Update with actual screen name
+        navigation.navigate('StudentDashboard'); // Navigate on success
       }
     } catch (error) {
       console.error('Verify OTP Error:', error);
@@ -49,7 +68,6 @@ const OTPScreen = ({ route, navigation }: any) => {
 
       <View style={styles.otpContainer}>
         <OTPInput
-          value={otp}
           handleChange={setOtp}
           numberOfInputs={6}
           autofillFromClipboard={false}
