@@ -11,6 +11,17 @@ import {
   OTPGenerateResponse,
   OTPVerifyResponse,
   OTPResendResponse,
+  CreateSessionRequest,
+  CreateSessionResponse,
+  GetSessionsRequest,
+  GetSessionsResponse,
+  GetSessionByIdResponse,
+  UpdateSessionRequest,
+  UpdateSessionResponse,
+  DeleteSessionResponse,
+  StartSessionResponse,
+  EndSessionResponse,
+  CheckAutoStartResponse,
   RecordAttendanceRequest,
   RecordAttendanceResponse,
   RecordBulkAttendanceRequest,
@@ -114,8 +125,79 @@ export const attendanceApi = {
   },
 };
 
+/**
+ * Session Management API calls
+ */
+export const sessionApi = {
+  /**
+   * Create a new session
+   */
+  async createSession(data: CreateSessionRequest): Promise<CreateSessionResponse> {
+    return api.post<CreateSessionResponse>('/sessions', data);
+  },
+
+  /**
+   * Get sessions with optional filtering and pagination
+   */
+  async getSessions(params?: GetSessionsRequest): Promise<GetSessionsResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.teacherId) queryParams.append('teacherId', params.teacherId);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const url = queryParams.toString() ? `/sessions?${queryParams.toString()}` : '/sessions';
+    return api.get<GetSessionsResponse>(url);
+  },
+
+  /**
+   * Get session by ID
+   */
+  async getSessionById(id: string): Promise<GetSessionByIdResponse> {
+    return api.get<GetSessionByIdResponse>(`/sessions/${id}`);
+  },
+
+  /**
+   * Update session details
+   */
+  async updateSession(id: string, data: UpdateSessionRequest): Promise<UpdateSessionResponse> {
+    return api.put<UpdateSessionResponse>(`/sessions/${id}`, data);
+  },
+
+  /**
+   * Delete session
+   */
+  async deleteSession(id: string): Promise<DeleteSessionResponse> {
+    return api.delete<DeleteSessionResponse>(`/sessions/${id}`);
+  },
+
+  /**
+   * Start a scheduled session
+   */
+  async startSession(id: string): Promise<StartSessionResponse> {
+    return api.post<StartSessionResponse>(`/sessions/${id}/start`);
+  },
+
+  /**
+   * End an active session
+   */
+  async endSession(id: string): Promise<EndSessionResponse> {
+    return api.post<EndSessionResponse>(`/sessions/${id}/end`);
+  },
+
+  /**
+   * Check and start auto-start sessions
+   */
+  async checkAutoStart(): Promise<CheckAutoStartResponse> {
+    return api.get<CheckAutoStartResponse>('/sessions/auto-start');
+  },
+};
+
 export default {
   studentApi,
   otpApi,
   attendanceApi,
+  sessionApi,
 };

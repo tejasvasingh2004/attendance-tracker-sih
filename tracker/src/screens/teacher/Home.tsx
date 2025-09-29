@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useGetAttendanceStats } from '../../hooks';
+import { useGetAttendanceStats, useSession } from '../../hooks';
+import { Session } from '../../core/api/types';
 
-type Session = {
+type DisplaySession = {
   id: string;
   startEndTime: string;
   title: string;
@@ -28,8 +31,8 @@ function SessionCard({
   session,
   onStartAttendance,
 }: {
-  session: Session;
-  onStartAttendance: (session: Session) => void;
+  session: DisplaySession;
+  onStartAttendance: (session: DisplaySession) => void;
 }) {
   return (
     <View
@@ -157,14 +160,14 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
     fetchStats('session-1');
   }, []);
 
-  const onStartAttendance = (session: Session) => {
+  const onStartAttendance = (session: DisplaySession) => {
     navigation.navigate('AttendanceScreen', { session });
   };
 
   const handleTabChange = (tab: 'today' | 'yesterday') => {
     setSelectedTab(tab);
   };
-  const upcomingSessions: Session[] = [
+  const upcomingSessions: DisplaySession[] = [
     {
       id: 'session-1',
       startEndTime: '9:00 AM - 10:00 AM',

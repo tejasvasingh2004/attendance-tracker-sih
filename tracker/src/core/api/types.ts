@@ -149,6 +149,69 @@ export interface AttendanceResponse extends BaseApiResponse {
   attendance: Attendance;
 }
 
+// Session API types
+export interface CreateSessionRequest {
+  title: string;
+  subject: string;
+  teacherId: string;
+  startTime: string;
+  isAutoStart?: boolean;
+  duration?: number;
+}
+
+export interface CreateSessionResponse extends BaseApiResponse {
+  session: Session;
+}
+
+export interface GetSessionsRequest {
+  teacherId?: string;
+  status?: Session['status'];
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetSessionsResponse extends BaseApiResponse {
+  sessions: Session[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface GetSessionByIdResponse extends BaseApiResponse {
+  session: Session;
+}
+
+export interface UpdateSessionRequest {
+  title?: string;
+  subject?: string;
+  startTime?: string;
+  isAutoStart?: boolean;
+  duration?: number;
+}
+
+export interface UpdateSessionResponse extends BaseApiResponse {
+  session: Session;
+}
+
+export interface DeleteSessionResponse extends BaseApiResponse {}
+
+export interface StartSessionResponse extends BaseApiResponse {
+  session: Session;
+}
+
+export interface EndSessionResponse extends BaseApiResponse {
+  session: Session;
+}
+
+export interface CheckAutoStartResponse extends BaseApiResponse {
+  autoStartedSessions: Session[];
+}
+
 // Attendance API specific types
 export interface RecordAttendanceRequest {
   sessionId: string;
