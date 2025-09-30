@@ -2,12 +2,11 @@ import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AuthScreen } from './src/screens/auth';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { TeacherHome } from './src/screens/teacher';
-import OTPScreen from './src/screens/auth/OTP';
 import { enableScreens } from 'react-native-screens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
+import AuthScreen from './src/screens/auth';
 
 enableScreens();
 const Stack = createNativeStackNavigator();
@@ -32,7 +31,14 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return null;
+    return (
+      <SafeAreaProvider>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaProvider>
+    );
   }
 
   return (
@@ -47,11 +53,6 @@ export default function App() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
-            name="OTPScreen"
-            component={OTPScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
             name="TeacherHome"
             component={TeacherHome}
             options={{ headerShown: false }}
@@ -61,3 +62,18 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+});

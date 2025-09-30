@@ -10,7 +10,28 @@ import {
   OTPGenerateResponse,
   OTPVerifyResponse,
   OTPResendResponse,
+  StudentCheckRequest,
+  StudentCheckResponse,
+  TeacherLoginResponse,
+  TeacherSignupRequest,
+  TeacherSignupResponse,
+  TeacherCheckRequest,
+  TeacherCheckResponse,
 } from './types';
+
+export const teacherApi = {
+  async login(employeeId: string): Promise<TeacherLoginResponse> {
+    return api.post<TeacherLoginResponse>('/teachers/auth/login', { employeeId });
+  },
+
+  async signup(userData: TeacherSignupRequest): Promise<TeacherSignupResponse> {
+    return api.post<TeacherSignupResponse>('/teachers/auth/signup', userData);
+  },
+
+  async checkTeacher(params: TeacherCheckRequest): Promise<TeacherCheckResponse> {
+    return api.post<TeacherCheckResponse>('/teachers/auth/check', params);
+  },
+};
 
 /**
  * Student Authentication API calls
@@ -19,22 +40,30 @@ export const studentApi = {
   /**
    * Login student with email and hardware ID
    */
-  async login(email: string, hardwareId: string): Promise<StudentLoginResponse> {
-    return api.post<StudentLoginResponse>('/students/login', { email, hardwareId });
+  async login(
+    rollNumber: string,
+    hardwareId: string,
+  ): Promise<StudentLoginResponse> {
+    return api.post<StudentLoginResponse>('/students/auth/login', {
+      rollNumber,
+      hardwareId,
+    });
   },
 
   /**
    * Signup new student
    */
   async signup(userData: StudentSignupRequest): Promise<StudentSignupResponse> {
-    return api.post<StudentSignupResponse>('/students/signup', userData);
+    return api.post<StudentSignupResponse>('/students/auth/signup', userData);
   },
 
   /**
    * Check if student exists
    */
-  async checkStudent(params: { email?: string; hardwareId?: string }): Promise<{ exists: boolean }> {
-    return api.post<{ exists: boolean }>('/students/check', params);
+  async checkStudent(
+    params: StudentCheckRequest,
+  ): Promise<StudentCheckResponse> {
+    return api.post<StudentCheckResponse>('/students/auth/check', params);
   },
 };
 

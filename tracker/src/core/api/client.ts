@@ -3,7 +3,21 @@
  * Handles all HTTP requests with proper error handling and response parsing
  */
 
-const BASE_URL = 'http://10.0.2.2:3000/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BASE_URL = 'http://192.168.1.10:3000/api';
+
+/**
+ * Get JWT token from storage
+ */
+async function getAuthToken(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem('JWT_TOKEN');
+  } catch (error) {
+    console.error('Failed to get auth token:', error);
+    return null;
+  }
+}
 
 /**
  * Generic fetch wrapper with error handling and response parsing
@@ -14,9 +28,15 @@ async function apiRequest<T = any>(
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
 
+  console.log('URL', url);
+
+  // Get auth token for authenticated requests
+  const token = await getAuthToken();
+  
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   };

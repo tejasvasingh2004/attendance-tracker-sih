@@ -157,10 +157,10 @@ router.post(
         const remainingTime = Math.ceil(
           (existingRecord.expiresAt - Date.now()) / 1000
         );
-        logOTPOperation("GENERATE", userId, email, false);
-        return res.status(409).json({
-          error: `OTP already exists. Please wait ${remainingTime} seconds before requesting a new one.`,
-          code: "OTP_ALREADY_EXISTS",
+        return res.status(201).json({
+          message: "OTP already exists. Reusing active OTP window.",
+          alreadyExists: true,
+          expiresIn: remainingTime,
         });
       }
 
@@ -177,7 +177,7 @@ router.post(
 
       // Send email
       await resendClient.emails.send({
-        from: "onboarding@resend.dev",
+        from: "verification@sahil1337.xyz",
         to: email,
         subject: "Your OTP Code",
         html: `
@@ -250,7 +250,7 @@ router.post(
 
       if (!record) {
         logOTPOperation("VERIFY", userId, undefined, false);
-        return res.status(400).json({
+        return res.status(404).json({
           error: "No OTP found for this user. Please generate a new OTP.",
           code: "OTP_NOT_FOUND",
         });
@@ -260,7 +260,7 @@ router.post(
       if (Date.now() > record.expiresAt) {
         otpStore.delete(userId);
         logOTPOperation("VERIFY", userId, record.email, false);
-        return res.status(400).json({
+        return res.status(410).json({
           error: "OTP has expired. Please generate a new OTP.",
           code: "OTP_EXPIRED",
         });
@@ -270,7 +270,7 @@ router.post(
       if (record.attempts >= MAX_OTP_ATTEMPTS) {
         otpStore.delete(userId);
         logOTPOperation("VERIFY", userId, record.email, false);
-        return res.status(400).json({
+        return res.status(429).json({
           error:
             "Maximum verification attempts exceeded. Please generate a new OTP.",
           code: "MAX_ATTEMPTS_EXCEEDED",

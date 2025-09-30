@@ -1,7 +1,9 @@
 import config from "./config.ts";
 import express from "express";
 import cors from "cors";
-import studentRoutes from "./routes/index.ts";
+import studentRoutes from "./routes/students";
+import teachersRoutes from "./routes/teachers";
+
 import otpRoutes from "./routes/otp/index.ts";
 const app = express();
 
@@ -30,10 +32,10 @@ app.use((req, res, next) => {
 });
 
 
-app.get("/health", (req, res) => res.send("Server is healthy"));
-
-app.use("/api/students", studentRoutes);
+app.get("/api/health", (req, res) => res.send("Server is healthy"));
 app.use("/api/otp", otpRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/teachers", teachersRoutes)
 
 app.listen(config.port, () => {
   console.log(`Server running at http://localhost:${config.port}`);

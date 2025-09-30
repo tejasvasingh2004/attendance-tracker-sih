@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 
-const SECRET_KEY = "kfj23LKJf82jfl2_!@#sdjfl32lksjdf"; // Replace with a secure key or load from env
+const SECRET_KEY = "secret_key";
 
 export function generateToken(payload: object): string {
  
   return jwt.sign(payload, SECRET_KEY, {
-  
+    algorithm: "HS256",
   });
 }
 

@@ -30,7 +30,7 @@ export interface StudentLoginRequest {
 
 export interface StudentLoginResponse extends BaseApiResponse {
   user: Student;
-  token?: string;
+  token: string;
 }
 
 export interface StudentSignupRequest {
@@ -40,6 +40,16 @@ export interface StudentSignupRequest {
   year: number;
   section: string;
   hardwareId: string;
+}
+
+export interface StudentCheckRequest {
+  email?: string;
+  hardwareId?: string;
+  rollNumber?: string;
+}
+
+export interface StudentCheckResponse extends BaseApiResponse {
+  exists: boolean;
 }
 
 export interface StudentSignupResponse extends BaseApiResponse {
@@ -93,8 +103,28 @@ export interface TeacherLoginRequest {
 }
 
 export interface TeacherLoginResponse extends BaseApiResponse {
+  user: Teacher;
+  token: string;
+}
+
+export interface TeacherSignupRequest {
+  email: string;
+  name: string;
+  employeeId: string;
+  department: string;
+}
+
+export interface TeacherSignupResponse extends BaseApiResponse {
   teacher: Teacher;
-  token?: string;
+}
+
+export interface TeacherCheckRequest {
+  email?: string;
+  employeeId?: string;
+}
+
+export interface TeacherCheckResponse extends BaseApiResponse {
+  exists: boolean;
 }
 
 // Attendance related types
@@ -171,7 +201,7 @@ export interface ApiResponse<T = any> extends BaseApiResponse {
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 // API endpoint types
-export type ApiEndpoint = 
+export type ApiEndpoint =
   | '/students/login'
   | '/students/signup'
   | '/students/profile'
