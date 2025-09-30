@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import { Resend } from "resend";
 import { randomBytes } from "crypto";
 import config from "../../config";
+import { generateToken } from "../../utils/jwt";
 
 const router = express.Router();
 const resendClient = new Resend(String(config.resendAPI));
@@ -291,9 +292,13 @@ router.post(
       otpStore.delete(userId);
       logOTPOperation("VERIFY", userId, record.email, true);
 
+      // Generate JWT token with unlimited expiry
+      const token = generateToken({ userId, email: record.email });
+
       res.json({
         message: "OTP verified successfully",
         verifiedAt: new Date().toISOString(),
+        token,
       });
 
     } catch (error: any) {

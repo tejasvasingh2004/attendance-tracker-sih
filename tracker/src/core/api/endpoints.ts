@@ -29,6 +29,13 @@ export const studentApi = {
   async signup(userData: StudentSignupRequest): Promise<StudentSignupResponse> {
     return api.post<StudentSignupResponse>('/students/signup', userData);
   },
+
+  /**
+   * Check if student exists
+   */
+  async checkStudent(params: { email?: string; hardwareId?: string }): Promise<{ exists: boolean }> {
+    return api.post<{ exists: boolean }>('/students/check', params);
+  },
 };
 
 /**

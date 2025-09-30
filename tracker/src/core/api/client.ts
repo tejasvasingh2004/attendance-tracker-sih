@@ -23,7 +23,15 @@ async function apiRequest<T = any>(
 
   try {
     const response = await fetch(url, { ...defaultOptions, ...options });
-    const data = (await response.json()) as any;
+    const contentType = response.headers.get('content-type');
+    let data: any;
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { error: text || `HTTP ${response.status}: ${response.statusText}` };
+    }
 
     if (!response.ok) {
       throw new Error(

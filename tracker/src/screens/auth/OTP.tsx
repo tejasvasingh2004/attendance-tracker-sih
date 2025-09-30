@@ -5,33 +5,43 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  TextInput,
 } from 'react-native';
-import OTPInput from 'react-native-otp-inputs';
-import { useOTP } from '../../hooks/useAuth';
+import { useOTP, useStudentAuth } from '../../hooks/useAuth';
 
 const OTPScreen = ({ route, navigation }: any) => {
-  const { userId, email } = route.params;
+  const { email, pendingSignupData, onSignupSuccess } = route.params;
   const [otp, setOtp] = useState('');
   const { verifyOTP, resendOTP, generateOTP, loading } = useOTP();
+  const { signup, checkStudent } = useStudentAuth();
 
  useEffect(() => {
   let isMounted = true;
 
-  const sendOTP = async () => {
-    if (!userId || !email) return;
+  const checkAndSendOTP = async () => {
+    if (!email) return;
     try {
-      if (isMounted) await generateOTP(userId, email);
+      // Check if user already exists
+      const checkResult = await checkStudent({ email });
+      if (checkResult.exists) {
+        Alert.alert("Info", "User already exists. Please login.");
+        navigation.goBack();
+        return;
+      }
+
+      // If not exists, send OTP
+      if (isMounted) await generateOTP(email, email);
     } catch (error) {
       console.error('Generate OTP Error:', error);
     }
   };
 
-  sendOTP();
+  checkAndSendOTP();
 
   return () => {
     isMounted = false;
   };
-}, [userId, email, generateOTP]);
+}, [email, generateOTP, checkStudent, navigation]);
 
 
   const handleVerifyOTP = useCallback(async () => {
@@ -41,22 +51,36 @@ const OTPScreen = ({ route, navigation }: any) => {
     }
 
     try {
-      const result = await verifyOTP(userId, otp);
+      if (pendingSignupData) {
+        const verifyResult = await verifyOTP(email, otp);
+        if (verifyResult) {
+          const signupResult = await signup(pendingSignupData);
+          if (signupResult) {
+            onSignupSuccess();
+            Alert.alert('Success', 'Account created successfully. Please login.');
+          }
+        }
+      } else {
+        const result = await verifyOTP(email, otp);
       if (result) {
-        navigation.navigate('StudentDashboard'); // Navigate on success
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'TeacherHome' }],
+          });
+        }
       }
     } catch (error) {
       console.error('Verify OTP Error:', error);
     }
-  }, [userId, otp, verifyOTP, navigation]);
+  }, [email, otp, verifyOTP, signup, pendingSignupData, onSignupSuccess, navigation]);
 
   const handleResendOTP = useCallback(async () => {
     try {
-      await resendOTP(userId);
+      await resendOTP(email);
     } catch (error) {
       console.error('Resend OTP Error:', error);
     }
-  }, [userId, resendOTP]);
+  }, [email, resendOTP]);
 
   return (
     <View style={styles.container}>
@@ -67,13 +91,14 @@ const OTPScreen = ({ route, navigation }: any) => {
       </Text>
 
       <View style={styles.otpContainer}>
-        <OTPInput
-          handleChange={setOtp}
-          numberOfInputs={6}
-          autofillFromClipboard={false}
-          style={styles.otpInput}
-          inputStyles={styles.otpInputStyle}
-          focusStyles={styles.otpFocusStyle}
+        <TextInput
+          style={styles.otpInputStyle}
+          value={otp}
+          onChangeText={setOtp}
+          keyboardType="numeric"
+          maxLength={6}
+          placeholder="Enter 6-digit OTP"
+          autoFocus
         />
       </View>
 
@@ -143,7 +168,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   otpInputStyle: {
-    width: 45,
+    width: '100%',
     height: 55,
     borderWidth: 2,
     borderColor: '#ddd',

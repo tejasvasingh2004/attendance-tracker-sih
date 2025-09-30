@@ -73,11 +73,11 @@ const InputField = ({
 const AuthScreen = ({ navigation }: AuthScreenProps) => {
   const [deviceId, setDeviceId] = useState('');
   const [isOtpModalVisible, setOtpModalVisible] = useState(false);
-  const [otpUserId, setOtpUserId] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
+  const [pendingSignupData, setPendingSignupData] = useState<any>(null);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [userRole, setUserRole] = useState<UserRole>('student');
-  const { login, signup, loading } = useStudentAuth();
+  const { login, signup, checkStudent, loading } = useStudentAuth();
 
   useEffect(() => {
     const fetchDeviceId = async () => {
@@ -134,25 +134,27 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
         if (authMode === 'login') {
           const result = await login(values.email, deviceId);
           if (result) {
-            navigation.navigate('TeacherHome'); 
+            navigation.navigate('TeacherHome');
           }
         } else {
-          const result = await signup({
-            email: values.email,
+          // For signup: check if user exists first
+          const checkResult = await checkStudent({ email: values.email });
+          if (checkResult.exists) {
+            Alert.alert("Info", "User already exists. Please login.");
+            return;
+          }
+
+          // If not exists, prepare data and open OTP modal
+          setPendingSignupData({
             name: values.name || '',
+            email: values.email,
             rollNumber: values.enrollment,
             year: 2025,
-            section: "A",
+            section: 'A',
             hardwareId: deviceId,
           });
-
-          if (result) {
-            setOtpUserId(result.user.id);
-            setOtpEmail(values.email);
-            setOtpModalVisible(true);
-            setAuthMode('login');
-            // Alert.alert('Success', 'Account created successfully! Please verify OTP.');
-          }
+          setOtpEmail(values.email);
+          setOtpModalVisible(true);
         }
       } catch (error) {
         console.error('Auth error:', error);
@@ -247,7 +249,7 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
         <View style={modalStyles.modalOverlay}>
           <View style={modalStyles.modalContainer}>
             <OTPScreen
-              route={{ params: { userId: otpUserId, email: otpEmail } }}
+              route={{ params: { email: otpEmail, pendingSignupData, onSignupSuccess: () => setAuthMode('login') } }}
               navigation={{
                 goBack: () => setOtpModalVisible(false),
                 navigate: () => setOtpModalVisible(false), // close modal on OTP success

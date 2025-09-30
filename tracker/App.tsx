@@ -7,6 +7,7 @@ import { TeacherHome } from './src/screens/teacher';
 import OTPScreen from './src/screens/auth/OTP';
 import { enableScreens } from 'react-native-screens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 enableScreens();
 const Stack = createNativeStackNavigator();
@@ -18,7 +19,7 @@ export default function App() {
   React.useEffect(() => {
     const checkToken = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('JWT_TOKEN');
+        const storedToken = await AsyncStorage.getItem('TOKEN');
         setToken(storedToken);
       } catch (error) {
         console.error('Failed to load token', error);

@@ -36,10 +36,12 @@ const verifyOTP = useCallback(async (userId: string, otp: string) => {
   try {
     const result = await otpApi.verify(userId, otp);
 
-    if (result.message === 'OTP verified successfully' && result.token) {
-      await AsyncStorage.setItem('jwtToken', result.token);
+    if (result.message === 'OTP verified successfully') {
+      if (result.token) {
+        await AsyncStorage.setItem('JWT_TOKEN', result.token);
+      }
       Alert.alert('Success', 'OTP verified successfully');
-      return result.token; 
+      return result;
     } else {
       Alert.alert('Error', result.message || 'OTP verification failed.');
       return null;
@@ -74,6 +76,25 @@ const verifyOTP = useCallback(async (userId: string, otp: string) => {
     generateOTP,
     verifyOTP,
     resendOTP,
+  };
+}
+
+/**
+ * Hook for authentication utilities
+ */
+export function useAuth() {
+  const logout = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem('JWT_TOKEN');
+      Alert.alert('Logged out', 'You have been logged out successfully.');
+    } catch (error) {
+      console.error('Failed to logout', error);
+      Alert.alert('Error', 'Failed to logout.');
+    }
+  }, []);
+
+  return {
+    logout,
   };
 }
 
@@ -115,9 +136,25 @@ export function useStudentAuth() {
     [],
   );
 
+  const checkStudent = useCallback(async (params: { email?: string; hardwareId?: string }) => {
+    setLoading(true);
+    try {
+      const result = await studentApi.checkStudent(params);
+      return result;
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      Alert.alert('Error', errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     login,
     signup,
+    checkStudent,
   };
 }
+

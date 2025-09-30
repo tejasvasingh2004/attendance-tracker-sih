@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useAuth } from '../../hooks/useAuth';
 
 type Session = {
   startEndTime: string;
@@ -147,6 +148,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
   const [selectedTab, setSelectedTab] = useState<'today' | 'yesterday'>(
     'today',
   );
+  const { logout } = useAuth();
 
   const onStartAttendance = (session: Session) => {
     navigation.navigate('AttendanceScreen', { session });
@@ -154,6 +156,14 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
 
   const handleTabChange = (tab: 'today' | 'yesterday') => {
     setSelectedTab(tab);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'AuthScreen' }],
+    });
   };
   const upcomingSessions: Session[] = [
     {
@@ -218,30 +228,43 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                 Manage your classes
               </Text>
             </View>
-            <View style={{ position: 'relative' }}>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ position: 'relative' }}>
+                <TouchableOpacity
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor: '#f1f5f9',
+                  }}
+                  accessibilityLabel="Notifications"
+                >
+                  <MaterialIcons name="notifications" size={24} color="#475569" />
+                </TouchableOpacity>
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    height: 8,
+                    width: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#ef4444',
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                  }}
+                />
+              </View>
               <TouchableOpacity
                 style={{
                   padding: 12,
                   borderRadius: 12,
                   backgroundColor: '#f1f5f9',
                 }}
-                accessibilityLabel="Notifications"
+                onPress={handleLogout}
+                accessibilityLabel="Logout"
               >
-                <MaterialIcons name="notifications" size={24} color="#475569" />
+                <MaterialIcons name="logout" size={24} color="#475569" />
               </TouchableOpacity>
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  height: 8,
-                  width: 8,
-                  borderRadius: 4,
-                  backgroundColor: '#ef4444',
-                  borderWidth: 2,
-                  borderColor: '#ffffff',
-                }}
-              />
             </View>
           </View>
         </View>
