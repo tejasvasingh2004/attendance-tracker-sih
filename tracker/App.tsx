@@ -3,13 +3,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { TeacherHome } from './src/screens/teacher';
+import { AttendanceScreen, TeacherHome } from './src/screens/teacher';
 import { enableScreens } from 'react-native-screens';
 import { validateAuthState } from './src/core/api/client';
 import AuthScreen from './src/screens/auth';
+import { RootStackParamList } from './src/types/navigation';
 
 enableScreens();
-const Stack = createNativeStackNavigator();
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
@@ -20,7 +22,7 @@ export default function App() {
     const checkAuthState = async () => {
       try {
         const authState = await validateAuthState();
-        
+
         if (authState.isValid && authState.token && authState.user) {
           setToken(authState.token);
           setUserRole(authState.user.role);
@@ -48,7 +50,7 @@ export default function App() {
 
   const getInitialRoute = () => {
     if (!token || !userRole) return 'AuthScreen';
-    
+
     switch (userRole) {
       case 'TEACHER':
         return 'TeacherHome';
@@ -62,9 +64,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName={getInitialRoute()}
-        >
+        <Stack.Navigator initialRouteName={getInitialRoute()}>
           <Stack.Screen
             name="AuthScreen"
             component={AuthScreen}
@@ -73,6 +73,11 @@ export default function App() {
           <Stack.Screen
             name="TeacherHome"
             component={TeacherHome}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AttendanceScreen"
+            component={AttendanceScreen}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>

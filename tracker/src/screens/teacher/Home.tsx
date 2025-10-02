@@ -19,17 +19,10 @@ type TeacherHomeProps = {
 };
 
 export default function TeacherHome({ navigation }: TeacherHomeProps) {
-  const [selectedTab, setSelectedTab] = useState<'today' | 'yesterday'>(
-    'today',
-  );
   const { logout } = useAuth();
 
   const onStartAttendance = (session: Session) => {
     navigation.navigate('AttendanceScreen', { session });
-  };
-
-  const handleTabChange = (tab: 'today' | 'yesterday') => {
-    setSelectedTab(tab);
   };
 
   const handleLogout = async () => {
@@ -64,11 +57,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
         <View style={styles.headerContainer}>
           <View style={styles.headerRow}>
             <View>
-              <Text
-                style={styles.title}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
+              <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
                 Attendance
               </Text>
               <Text
@@ -86,7 +75,11 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                   style={styles.iconWrap}
                   accessibilityLabel="Notifications"
                 >
-                  <MaterialIcons name="notifications" size={20} color="#475569" />
+                  <MaterialIcons
+                    name="notifications"
+                    size={20}
+                    color="#475569"
+                  />
                 </TouchableOpacity>
                 <View style={styles.notifyDot} />
               </View>
@@ -108,51 +101,7 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ gap: 32 }}>
-            {/* Tab Selector */}
-            <View style={{ paddingHorizontal: 24, paddingTop: 20 }}>
-              <View style={styles.tabWrap}>
-                <View
-                  style={[
-                    styles.tabSlider,
-                    { left: selectedTab === 'today' ? 4 : '50%' },
-                  ]}
-                />
-                <TouchableOpacity
-                  style={styles.tabButton}
-                  onPress={() => handleTabChange('today')}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      selectedTab === 'today' && styles.tabTextActive,
-                    ]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  >
-                    Today
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.tabButton}
-                  onPress={() => handleTabChange('yesterday')}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      selectedTab === 'yesterday' && styles.tabTextActive,
-                    ]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                  >
-                    Yesterday
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Upcoming Sessions */}
-            <View>
+            <View style={{ paddingTop: 20 }}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionMarker} />
                 <Text style={styles.sectionTitle}>Upcoming Classes</Text>
@@ -171,7 +120,9 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
             {/* Completed Sessions */}
             <View>
               <View style={styles.sectionHeader}>
-                <View style={[styles.sectionMarker, { backgroundColor: '#10b981' }]} />
+                <View
+                  style={[styles.sectionMarker, { backgroundColor: '#10b981' }]}
+                />
                 <Text style={styles.sectionTitle}>Completed Classes</Text>
               </View>
 
@@ -180,15 +131,27 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                 <View style={styles.completedCard}>
                   <View style={styles.completedTop}>
                     <View>
-                      <Text style={styles.completedTitle} numberOfLines={1} adjustsFontSizeToFit>
+                      <Text
+                        style={styles.completedTitle}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
                         Chemistry 101
                       </Text>
-                      <Text style={styles.completedMeta} numberOfLines={1} adjustsFontSizeToFit>
+                      <Text
+                        style={styles.completedMeta}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
                         8:00 AM - 9:00 AM
                       </Text>
                     </View>
                     <View style={styles.completedBadge}>
-                      <MaterialIcons name="check-circle" size={16} color="#15803d" />
+                      <MaterialIcons
+                        name="check-circle"
+                        size={16}
+                        color="#15803d"
+                      />
                       <Text style={styles.completedBadgeText}>Completed</Text>
                     </View>
                   </View>
@@ -200,11 +163,15 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
                     </View>
                     <View style={[styles.statBox, styles.presentBox]}>
                       <Text style={styles.statLabelPresent}>Present</Text>
-                      <Text style={[styles.statValue, { color: '#166534' }]}>28</Text>
+                      <Text style={[styles.statValue, { color: '#166534' }]}>
+                        28
+                      </Text>
                     </View>
                     <View style={[styles.statBox, styles.absentBox]}>
                       <Text style={styles.statLabelAbsent}>Absent</Text>
-                      <Text style={[styles.statValue, { color: '#b91c1c' }]}>2</Text>
+                      <Text style={[styles.statValue, { color: '#b91c1c' }]}>
+                        2
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -287,11 +254,35 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  tabButton: { flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, zIndex: 1, alignItems: 'center', justifyContent: 'center' },
-  tabText: { fontSize: fontSize(14), fontWeight: '600', color: '#64748b', textAlign: 'center' },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    zIndex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: fontSize(14),
+    fontWeight: '600',
+    color: '#64748b',
+    textAlign: 'center',
+  },
   tabTextActive: { color: '#fff' },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingHorizontal: 24 },
-  sectionMarker: { width: 4, height: 24, backgroundColor: '#3b82f6', borderRadius: 2, marginRight: 12 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+  },
+  sectionMarker: {
+    width: 4,
+    height: 24,
+    backgroundColor: '#3b82f6',
+    borderRadius: 2,
+    marginRight: 12,
+  },
   sectionTitle: { fontSize: fontSize(18), fontWeight: '800', color: '#0f172a' },
   completedCard: {
     backgroundColor: '#fff',
@@ -305,17 +296,73 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  completedTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  completedTitle: { fontSize: fontSize(16), fontWeight: '800', color: '#0f172a', marginBottom: 4 },
-  completedMeta: { fontSize: fontSize(13), color: '#64748b', fontWeight: '500' },
-  completedBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: '#dcfce7' },
-  completedBadgeText: { fontSize: fontSize(12), fontWeight: '600', color: '#15803d', marginLeft: 6 },
+  completedTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  completedTitle: {
+    fontSize: fontSize(16),
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 4,
+  },
+  completedMeta: {
+    fontSize: fontSize(13),
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#dcfce7',
+  },
+  completedBadgeText: {
+    fontSize: fontSize(12),
+    fontWeight: '600',
+    color: '#15803d',
+    marginLeft: 6,
+  },
   completedStatsRow: { flexDirection: 'row', gap: 12 },
-  statBox: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#f8fafc', padding: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
   presentBox: { backgroundColor: '#dcfce7', borderColor: '#bbf7d0' },
   absentBox: { backgroundColor: '#fee2e2', borderColor: '#fecaca' },
-  statLabel: { fontSize: fontSize(12), fontWeight: '600', color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statLabelPresent: { fontSize: fontSize(12), fontWeight: '600', color: '#15803d', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statLabelAbsent: { fontSize: fontSize(12), fontWeight: '600', color: '#dc2626', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statLabel: {
+    fontSize: fontSize(12),
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statLabelPresent: {
+    fontSize: fontSize(12),
+    fontWeight: '600',
+    color: '#15803d',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statLabelAbsent: {
+    fontSize: fontSize(12),
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   statValue: { fontSize: fontSize(20), fontWeight: '800', color: '#0f172a' },
 });
