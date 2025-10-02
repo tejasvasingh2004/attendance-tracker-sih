@@ -8,13 +8,54 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const BASE_URL = 'http://192.168.1.10:3000/api';
 
 /**
- * Get JWT token from storage
+ * Check if JWT token is expired
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+    return payload.exp < currentTime;
+  } catch (error) {
+    console.error('Failed to parse token:', error);
+    return true; // Consider invalid tokens as expired
+  }
+}
+
+/**
+ * Clear auth data from storage
+ */
+async function clearAuthData(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem('JWT_TOKEN');
+    await AsyncStorage.removeItem('USER_DATA');
+  } catch (error) {
+    console.error('Failed to clear auth data:', error);
+  }
+}
+
+/**
+ * Get JWT token from storage and validate it
  */
 async function getAuthToken(): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem('JWT_TOKEN');
+    const token = await AsyncStorage.getItem('JWT_TOKEN');
+    
+    if (!token) {
+      return null;
+    }
+    
+    // Check if token is expired
+    if (isTokenExpired(token)) {
+      console.log('Token expired, clearing auth data');
+      await clearAuthData();
+      return null;
+    }
+    
+    console.log('Retrieved valid token');
+    return token;
   } catch (error) {
     console.error('Failed to get auth token:', error);
+    await clearAuthData();
     return null;
   }
 }
@@ -27,7 +68,6 @@ async function apiRequest<T = any>(
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
-
   console.log('URL', url);
 
   // Get auth token for authenticated requests
@@ -54,6 +94,12 @@ async function apiRequest<T = any>(
     }
 
     if (!response.ok) {
+      // Handle token expiration
+      if (response.status === 401 || response.status === 403) {
+        console.log('Token expired or invalid, clearing auth data');
+        await clearAuthData();
+      }
+      
       throw new Error(
         data.error ||
           data.message ||
@@ -123,6 +169,32 @@ export const api = {
       headers,
     });
   },
+};
+
+/**
+ * Validate authentication state
+ */
+export const validateAuthState = async (): Promise<{
+  isValid: boolean;
+  token: string | null;
+  user: any;
+}> => {
+  try {
+    const token = await getAuthToken();
+    const userData = await AsyncStorage.getItem('USER_DATA');
+    
+    if (!token || !userData) {
+      await clearAuthData();
+      return { isValid: false, token: null, user: null };
+    }
+    
+    const user = JSON.parse(userData);
+    return { isValid: true, token, user };
+  } catch (error) {
+    console.error('Auth validation failed:', error);
+    await clearAuthData();
+    return { isValid: false, token: null, user: null };
+  }
 };
 
 /**

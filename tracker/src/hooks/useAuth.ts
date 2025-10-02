@@ -20,10 +20,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export function useOTP() {
   const [loading, setLoading] = useState(false);
 
-  const generateOTP = useCallback(async (userId: string, email: string) => {
+  const generateOTP = useCallback(async (email: string) => {
     setLoading(true);
     try {
-      const result = await otpApi.generate(userId, email);
+      const result = await otpApi.generate(email);
       return result;
     } catch (error) {
       const errorMessage = handleApiError(error);
@@ -34,34 +34,12 @@ export function useOTP() {
     }
   }, []);
 
-  const verifyOTP = useCallback(async (userId: string, otp: string) => {
+
+
+  const resendOTP = useCallback(async (email: string) => {
     setLoading(true);
     try {
-      const result = await otpApi.verify(userId, otp);
-
-      if (result.message === 'OTP verified successfully') {
-        if (result.token) {
-          await AsyncStorage.setItem('JWT_TOKEN', result.token);
-        }
-        Alert.alert('Success', 'OTP verified successfully');
-        return result;
-      } else {
-        Alert.alert('Error', result.message || 'OTP verification failed.');
-        return null;
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      Alert.alert('Error', 'OTP verification failed.');
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const resendOTP = useCallback(async (userId: string) => {
-    setLoading(true);
-    try {
-      const result = await otpApi.resend(userId);
+      const result = await otpApi.resend(email);
       Alert.alert('OTP Resent', 'A new OTP has been sent to your email.');
       return result;
     } catch (error) {
@@ -76,7 +54,6 @@ export function useOTP() {
   return {
     loading,
     generateOTP,
-    verifyOTP,
     resendOTP,
   };
 }
@@ -88,6 +65,7 @@ export function useAuth() {
   const logout = useCallback(async () => {
     try {
       await AsyncStorage.removeItem('JWT_TOKEN');
+      await AsyncStorage.removeItem('USER_DATA');
       Alert.alert('Logged out', 'You have been logged out successfully.');
     } catch (error) {
       console.error('Failed to logout', error);
@@ -95,8 +73,31 @@ export function useAuth() {
     }
   }, []);
 
+  const getUser = useCallback(async () => {
+    try {
+      const userData = await AsyncStorage.getItem('USER_DATA');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Failed to get user data', error);
+      return null;
+    }
+  }, []);
+
+  const isAuthenticated = useCallback(async () => {
+    try {
+      const token = await AsyncStorage.getItem('JWT_TOKEN');
+      const userData = await AsyncStorage.getItem('USER_DATA');
+      return !!(token && userData);
+    } catch (error) {
+      console.error('Failed to check auth status', error);
+      return false;
+    }
+  }, []);
+
   return {
     logout,
+    getUser,
+    isAuthenticated,
   };
 }
 
@@ -110,6 +111,11 @@ export function useTeacherAuth() {
       
       if (result.token) {
         await AsyncStorage.setItem('JWT_TOKEN', result.token);
+      }
+      
+      // Store user data for role-based navigation and app context
+      if (result.user) {
+        await AsyncStorage.setItem('USER_DATA', JSON.stringify(result.user));
       }
       
       return result;
@@ -126,6 +132,17 @@ export function useTeacherAuth() {
     setLoading(true);
     try {
       const result = await teacherApi.signup(userData);
+      
+      // Store JWT token if present
+      if (result.token) {
+        await AsyncStorage.setItem('JWT_TOKEN', result.token);
+      }
+      
+      // Store user data for role-based navigation and app context
+      if (result.user) {
+        await AsyncStorage.setItem('USER_DATA', JSON.stringify(result.user));
+      }
+      
       return result;
     } catch (error) {
       const errorMessage = handleApiError(error);
@@ -174,6 +191,11 @@ export function useStudentAuth() {
         await AsyncStorage.setItem('JWT_TOKEN', result.token);
       }
       
+      // Store user data for role-based navigation and app context
+      if (result.user) {
+        await AsyncStorage.setItem('USER_DATA', JSON.stringify(result.user));
+      }
+      
       return result;
     } catch (error) {
       const errorMessage = handleApiError(error);
@@ -188,7 +210,17 @@ export function useStudentAuth() {
     setLoading(true);
     try {
       const result = await studentApi.signup(userData);
-      Alert.alert('Success', result.message);
+      
+      // Store JWT token if present
+      if (result.token) {
+        await AsyncStorage.setItem('JWT_TOKEN', result.token);
+      }
+      
+      // Store user data for role-based navigation and app context
+      if (result.user) {
+        await AsyncStorage.setItem('USER_DATA', JSON.stringify(result.user));
+      }
+      
       return result;
     } catch (error) {
       const errorMessage = handleApiError(error);

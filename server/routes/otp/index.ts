@@ -1,138 +1,45 @@
 import express, { type Request, type Response } from "express";
 import { Resend } from "resend";
-import { randomBytes } from "crypto";
 import config from "../../config";
-import { generateToken } from "../../utils/jwt";
+import {
+  otpStore,
+  rateLimitStore,
+  generateSecureOTP,
+  isValidEmail,
+  isRateLimited,
+  cleanupExpiredOTPs,
+  logOTPOperation,
+  OTP_EXPIRY_MINUTES,
+} from "../../utils/otp";
 
 const router = express.Router();
 const resendClient = new Resend(String(config.resendAPI));
 
-const otpStore = new Map<
-  string,
-  {
-    otp: string;
-    expiresAt: number;
-    email: string;
-    attempts: number;
-    createdAt: number;
-  }
->();
-
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
 interface GenerateOTPRequest {
-  userId: string;
   email: string;
 }
 
-interface VerifyOTPRequest {
-  userId: string;
-  otp: string;
-}
-
 interface ResendOTPRequest {
-  userId: string;
+  email: string;  
 }
-
-// Constants
-const OTP_EXPIRY_MINUTES = 5;
-const MAX_OTP_ATTEMPTS = 10;
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_OTP_REQUESTS_PER_WINDOW = 10;
-const OTP_LENGTH = 6;
-
-const generateSecureOTP = (): string => {
-  const randomBytesArray = randomBytes(4); // 4 bytes = 32 bits
-  const randomNumber = randomBytesArray.readUInt32BE(0);
-
-  // Generate 6-digit OTP
-  const otp = (randomNumber % 1000000).toString().padStart(OTP_LENGTH, "0");
-
-  return otp;
-};
-
-const validateOTPFormat = (otp: string): boolean => {
-  // Check if OTP is exactly 6 digits and contains only numbers
-  return /^\d{6}$/.test(otp) && otp.length === OTP_LENGTH;
-};
-
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const isValidUserId = (userId: string): boolean => {
-  return Boolean(userId && userId.trim().length > 0);
-};
-
-const isRateLimited = (identifier: string): boolean => {
-  const now = Date.now();
-  const record = rateLimitStore.get(identifier);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(identifier, {
-      count: 1,
-      resetTime: now + RATE_LIMIT_WINDOW_MS,
-    });
-    return false;
-  }
-
-  if (record.count >= MAX_OTP_REQUESTS_PER_WINDOW) {
-    return true;
-  }
-
-  record.count++;
-  return false;
-};
-
-const cleanupExpiredOTPs = (): void => {
-  const now = Date.now();
-  for (const [userId, record] of otpStore.entries()) {
-    if (record.expiresAt < now) {
-      otpStore.delete(userId);
-    }
-  }
-};
-
-const logOTPOperation = (
-  operation: string,
-  userId: string,
-  email?: string,
-  success: boolean = true
-) => {
-  const timestamp = new Date().toISOString();
-  const status = success ? "SUCCESS" : "FAILED";
-  console.log(
-    `[${timestamp}] OTP_${operation}_${status} - UserId: ${userId}${email ? `, Email: ${email}` : ""
-    }`
-  );
-};
 
 router.post(
   "/generate",
   async (req: Request<{}, {}, GenerateOTPRequest>, res: Response) => {
     try {
-      const { userId, email } = req.body;
+      const { email } = req.body;
 
       // Input validation
-      if (!userId || !email) {
-        logOTPOperation("GENERATE", userId || "unknown", email, false);
+      if (!email) {
+        logOTPOperation("GENERATE", "unknown", email, false);
         return res.status(400).json({
-          error: "userId and email are required",
+          error: "email is required",
           code: "MISSING_REQUIRED_FIELDS",
         });
       }
 
-      if (!isValidUserId(userId)) {
-        logOTPOperation("GENERATE", userId, email, false);
-        return res.status(400).json({
-          error: "Invalid userId format",
-          code: "INVALID_USER_ID",
-        });
-      }
-
       if (!isValidEmail(email)) {
-        logOTPOperation("GENERATE", userId, email, false);
+        logOTPOperation("GENERATE", email, email, false);
         return res.status(400).json({
           error: "Invalid email format",
           code: "INVALID_EMAIL",
@@ -140,8 +47,8 @@ router.post(
       }
 
       // Rate limiting
-      if (isRateLimited(`generate:${userId}`)) {
-        logOTPOperation("GENERATE", userId, email, false);
+      if (isRateLimited(`generate:${email}`)) {
+        logOTPOperation("GENERATE", email, email, false);
         return res.status(429).json({
           error: "Too many OTP requests. Please try again later.",
           code: "RATE_LIMIT_EXCEEDED",
@@ -152,7 +59,7 @@ router.post(
       cleanupExpiredOTPs();
 
       // Check if user already has an active OTP
-      const existingRecord = otpStore.get(userId);
+      const existingRecord = otpStore.get(email);
       if (existingRecord && existingRecord.expiresAt > Date.now()) {
         const remainingTime = Math.ceil(
           (existingRecord.expiresAt - Date.now()) / 1000
@@ -167,7 +74,7 @@ router.post(
       const otp = generateSecureOTP();
       const expiresAt = Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000;
 
-      otpStore.set(userId, {
+      otpStore.set(email, {
         otp,
         expiresAt,
         email,
@@ -179,6 +86,7 @@ router.post(
       await resendClient.emails.send({
         from: "verification@sahil1337.xyz",
         to: email,
+        text: `Your OTP code is: ${otp}`,
         subject: "Your OTP Code",
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -193,7 +101,7 @@ router.post(
       `,
       });
 
-      logOTPOperation("GENERATE", userId, email, true);
+      logOTPOperation("GENERATE", email, email, true);
       res.json({
         message: "OTP generated and sent successfully",
         expiresIn: OTP_EXPIRY_MINUTES * 60,
@@ -202,7 +110,7 @@ router.post(
       console.error("OTP generation error:", error);
       logOTPOperation(
         "GENERATE",
-        req.body.userId || "unknown",
+        req.body.email || "unknown",
         req.body.email,
         false
       );
@@ -214,149 +122,50 @@ router.post(
   }
 );
 
-// Verify OTP
-router.post(
-  "/verify",
-  (req: Request<{}, {}, VerifyOTPRequest>, res: Response) => {
-    try {
-      const { userId, otp } = req.body;
-
-      // Input validation
-      if (!userId || !otp) {
-        logOTPOperation("VERIFY", userId || "unknown", undefined, false);
-        return res.status(400).json({
-          error: "userId and otp are required",
-          code: "MISSING_REQUIRED_FIELDS",
-        });
-      }
-
-      if (!isValidUserId(userId)) {
-        logOTPOperation("VERIFY", userId, undefined, false);
-        return res.status(400).json({
-          error: "Invalid userId format",
-          code: "INVALID_USER_ID",
-        });
-      }
-
-      if (!validateOTPFormat(otp)) {
-        logOTPOperation("VERIFY", userId, undefined, false);
-        return res.status(400).json({
-          error: "OTP must be a 6-digit number",
-          code: "INVALID_OTP_FORMAT",
-        });
-      }
-
-      const record = otpStore.get(userId);
-
-      if (!record) {
-        logOTPOperation("VERIFY", userId, undefined, false);
-        return res.status(404).json({
-          error: "No OTP found for this user. Please generate a new OTP.",
-          code: "OTP_NOT_FOUND",
-        });
-      }
-
-      // Check if OTP has expired
-      if (Date.now() > record.expiresAt) {
-        otpStore.delete(userId);
-        logOTPOperation("VERIFY", userId, record.email, false);
-        return res.status(410).json({
-          error: "OTP has expired. Please generate a new OTP.",
-          code: "OTP_EXPIRED",
-        });
-      }
-
-      // Check attempt limit
-      if (record.attempts >= MAX_OTP_ATTEMPTS) {
-        otpStore.delete(userId);
-        logOTPOperation("VERIFY", userId, record.email, false);
-        return res.status(429).json({
-          error:
-            "Maximum verification attempts exceeded. Please generate a new OTP.",
-          code: "MAX_ATTEMPTS_EXCEEDED",
-        });
-      }
-
-      // Verify OTP
-      if (record.otp !== otp) {
-        record.attempts++;
-        logOTPOperation("VERIFY", userId, record.email, false);
-        return res.status(400).json({
-          error: "Invalid OTP",
-          code: "INVALID_OTP",
-          remainingAttempts: MAX_OTP_ATTEMPTS - record.attempts,
-        });
-      }
-
-
-      otpStore.delete(userId);
-      logOTPOperation("VERIFY", userId, record.email, true);
-
-      // Generate JWT token with unlimited expiry
-      const token = generateToken({ userId, email: record.email });
-
-      res.json({
-        message: "OTP verified successfully",
-        verifiedAt: new Date().toISOString(),
-        token,
-      });
-
-    } catch (error: any) {
-      console.error("OTP verification error:", error);
-      logOTPOperation("VERIFY", req.body.userId || "unknown", undefined, false);
-
-      res.status(500).json({
-        error: "Failed to verify OTP. Please try again.",
-        code: "INTERNAL_SERVER_ERROR",
-      });
-    }
-  }
-);
-
 // Resend OTP
 router.post(
   "/resend",
   async (req: Request<{}, {}, ResendOTPRequest>, res: Response) => {
     try {
-      const { userId } = req.body;
+      const { email } = req.body;
 
       // Input validation
-      if (!userId) {
+      if (!email) {
         logOTPOperation("RESEND", "unknown", undefined, false);
         return res.status(400).json({
-          error: "userId is required",
+          error: "email is required",
           code: "MISSING_REQUIRED_FIELDS",
         });
       }
 
-      if (!isValidUserId(userId)) {
-        logOTPOperation("RESEND", userId, undefined, false);
+      if (!isValidEmail(email)) {
+        logOTPOperation("RESEND", email, email, false);
         return res.status(400).json({
-          error: "Invalid userId format",
-          code: "INVALID_USER_ID",
+          error: "Invalid email format",
+          code: "INVALID_EMAIL",
         });
       }
 
-      if (isRateLimited(`resend:${userId}`)) {
-        logOTPOperation("RESEND", userId, undefined, false);
+      if (isRateLimited(`resend:${email}`)) {
+        logOTPOperation("RESEND", email, email, false);
         return res.status(429).json({
           error: "Too many resend requests. Please try again later.",
           code: "RATE_LIMIT_EXCEEDED",
         });
       }
 
-      const record = otpStore.get(userId);
+      const record = otpStore.get(email);
 
       if (!record) {
-        logOTPOperation("RESEND", userId, undefined, false);
+        logOTPOperation("RESEND", email, email, false);
         return res.status(400).json({
-          error: "No OTP found for this user. Please generate a new OTP.",
+          error: "No OTP found for this email. Please generate a new OTP.",
           code: "OTP_NOT_FOUND",
         });
       }
       if (Date.now() > record.expiresAt) {
-        otpStore.delete(userId);
-        logOTPOperation("RESEND", userId, record.email, false);
+        otpStore.delete(email);
+        logOTPOperation("RESEND", email, record.email, false);
         return res.status(400).json({
           error: "OTP has expired. Please generate a new OTP.",
           code: "OTP_EXPIRED",
@@ -367,11 +176,11 @@ router.post(
       const newOtp = generateSecureOTP();
       const expiresAt = Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000;
 
-      otpStore.set(userId, {
+      otpStore.set(email, {
         ...record,
         otp: newOtp,
         expiresAt,
-        attempts: 0, 
+        attempts: 0,
       });
 
       // Send email
@@ -392,14 +201,14 @@ router.post(
       `,
       });
 
-      logOTPOperation("RESEND", userId, record.email, true);
+      logOTPOperation("RESEND", email, record.email, true);
       res.json({
         message: "OTP resent successfully",
         expiresIn: OTP_EXPIRY_MINUTES * 60,
       });
     } catch (error: any) {
       console.error("OTP resend error:", error);
-      logOTPOperation("RESEND", req.body.userId || "unknown", undefined, false);
+      logOTPOperation("RESEND", req.body.email || "unknown", req.body.email, false);
 
       res.status(500).json({
         error: "Failed to resend OTP. Please try again.",

@@ -1,12 +1,12 @@
 import { type Request, type Response, type NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
-const SECRET_KEY = process.env.JWT_SECRET as string;
-
+const SECRET_KEY = process.env.JWT_SECRET || "fallback_secret_key_change_in_production";
 
 interface MyJwtPayload extends JwtPayload {
-  id: string;
+  userId: string;
   email: string;
+  role: string;
 }
 
 

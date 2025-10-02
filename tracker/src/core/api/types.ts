@@ -15,6 +15,7 @@ export interface Student {
   id: string;
   name: string;
   email: string;
+  role: string;
   rollNumber: string;
   year: number;
   section: string;
@@ -40,6 +41,7 @@ export interface StudentSignupRequest {
   year: number;
   section: string;
   hardwareId: string;
+  otp: string;
 }
 
 export interface StudentCheckRequest {
@@ -54,36 +56,25 @@ export interface StudentCheckResponse extends BaseApiResponse {
 
 export interface StudentSignupResponse extends BaseApiResponse {
   user: Student;
+  token: string;
 }
 
 // OTP related types
 export interface OTPGenerateRequest {
-  userId: string;
   email: string;
 }
 
 export interface OTPGenerateResponse extends BaseApiResponse {
-  otpId?: string;
-  expiresAt?: string;
-}
-
-export interface OTPVerifyRequest {
-  userId: string;
-  otp: string;
-}
-
-export interface OTPVerifyResponse extends BaseApiResponse {
-  verified: boolean;
-  token?: string;
+  expiresIn?: number;
+  alreadyExists?: boolean;
 }
 
 export interface OTPResendRequest {
-  userId: string;
+  email: string;
 }
 
 export interface OTPResendResponse extends BaseApiResponse {
-  otpId?: string;
-  expiresAt?: string;
+  expiresIn?: number;
 }
 
 // Teacher related types
@@ -91,6 +82,7 @@ export interface Teacher {
   id: string;
   name: string;
   email: string;
+  role: string;
   department: string;
   employeeId: string;
   createdAt?: string;
@@ -112,10 +104,12 @@ export interface TeacherSignupRequest {
   name: string;
   employeeId: string;
   department: string;
+  otp: string;
 }
 
 export interface TeacherSignupResponse extends BaseApiResponse {
-  teacher: Teacher;
+  user: Teacher;
+  token: string;
 }
 
 export interface TeacherCheckRequest {

@@ -162,16 +162,40 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
       }
 
       try {
+        // Helper function for role-based navigation
+        const navigateBasedOnRole = (userRole: string) => {
+          if (userRole === 'TEACHER') {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'TeacherHome' }],
+            });
+          } else if (userRole === 'STUDENT') {
+            // For now, navigate to TeacherHome until student screens are implemented
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'TeacherHome' }],
+            });
+          } else {
+            console.warn('Unknown user role:', userRole);
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'TeacherHome' }],
+            });
+          }
+        };
+
         if (authMode === 'login') {
           if (userRole === 'teacher') {
             const result = await teacherLogin(values.employeeId);
             if (result) {
-              navigation.navigate('TeacherHome');
+              // Navigate based on the actual user role from the response
+              navigateBasedOnRole(result.user.role);
             }
           } else {
             const result = await studentLogin(values.enrollment, deviceId);
             if (result) {
-              navigation.navigate('TeacherHome');
+              // Navigate based on the actual user role from the response
+              navigateBasedOnRole(result.user.role);
             }
           }
         } else {
@@ -187,7 +211,7 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
             }
 
             // Generate OTP for teacher signup
-            await generateOTP(values.email, values.email);
+            await generateOTP(values.email);
 
             // Prepare teacher data and open OTP modal
             setPendingSignupData({
@@ -209,8 +233,8 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
               return;
             }
 
-            // Generate OTP, then open modal
-            await generateOTP(values.email, values.email);
+                        // Generate OTP, then open modal
+            await generateOTP(values.email);
 
             // Prepare student data and open OTP modal
             setPendingSignupData({
@@ -360,37 +384,58 @@ const AuthScreen = ({ navigation }: AuthScreenProps) => {
       {/* OTP Modal */}
       <OTPModal
         visible={isOtpModalVisible}
-        userId={otpEmail}
         email={otpEmail}
         onClose={() => setOtpModalVisible(false)}
-        onSuccess={async () => {
+        onResend={() => generateOTP(otpEmail)}
+        onSuccess={async (otp: string) => {
           try {
             if (pendingSignupData) {
               let signupResult;
               
               if (pendingSignupData.role === 'teacher') {
-                // Teacher signup
+                // Teacher signup with OTP
                 signupResult = await teacherSignup({
                   name: pendingSignupData.name,
                   email: pendingSignupData.email,
                   employeeId: pendingSignupData.employeeId,
                   department: pendingSignupData.department,
+                  otp: otp,
                 });
               } else {
-                // Student signup
-                signupResult = await studentSignup(pendingSignupData);
+                // Student signup with OTP
+                signupResult = await studentSignup({
+                  ...pendingSignupData,
+                  otp: otp,
+                });
               }
               
               if (signupResult) {
                 Alert.alert(
                   'Success',
-                  'Account created successfully. Please login.',
+                  'Account created successfully! You are now logged in.',
                 );
-                setAuthMode('login');
+                
+                // Navigate based on the user role from the response
+                const navigateBasedOnRole = (userRole: string) => {
+                  if (userRole === 'TEACHER') {
+                    navigation.navigate('TeacherHome');
+                  } else if (userRole === 'STUDENT') {
+                    navigation.navigate('/student/home' as any);
+                  } else {
+                    console.warn('Unknown user role:', userRole);
+                    navigation.navigate('TeacherHome'); // Fallback
+                  }
+                };
+                
+                navigateBasedOnRole(signupResult.user.role);
               }
             }
+          } catch (error) {
+            console.error('Signup error:', error);
           } finally {
             setOtpModalVisible(false);
+            setPendingSignupData(null);
+            setOtpEmail('');
           }
         }}
       />

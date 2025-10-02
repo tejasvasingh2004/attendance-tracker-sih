@@ -8,7 +8,6 @@ import {
   StudentSignupRequest,
   StudentSignupResponse,
   OTPGenerateResponse,
-  OTPVerifyResponse,
   OTPResendResponse,
   StudentCheckRequest,
   StudentCheckResponse,
@@ -71,16 +70,12 @@ export const studentApi = {
  * OTP Management API calls
  */
 export const otpApi = {
-  async generate(userId: string, email: string): Promise<OTPGenerateResponse> {
-    return api.post<OTPGenerateResponse>('/otp/generate', { userId, email });
+  async generate(email: string): Promise<OTPGenerateResponse> {
+    return api.post<OTPGenerateResponse>('/otp/generate', { email });
   },
 
-  async verify(userId: string, otp: string): Promise<OTPVerifyResponse> {
-    return api.post<OTPVerifyResponse>('/otp/verify', { userId, otp });
-  },
-
-  async resend(userId: string): Promise<OTPResendResponse> {
-    return api.post<OTPResendResponse>('/otp/resend', { userId });
+  async resend(email: string): Promise<OTPResendResponse> {
+    return api.post<OTPResendResponse>('/otp/resend', { email });
   },
 };
 

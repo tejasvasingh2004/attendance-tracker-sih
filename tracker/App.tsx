@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { TeacherHome } from './src/screens/teacher';
 import { enableScreens } from 'react-native-screens';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { validateAuthState } from './src/core/api/client';
 import AuthScreen from './src/screens/auth';
 
 enableScreens();
@@ -14,20 +14,25 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [token, setToken] = React.useState<string | null>(null);
+  const [userRole, setUserRole] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const checkToken = async () => {
+    const checkAuthState = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('TOKEN');
-        setToken(storedToken);
+        const authState = await validateAuthState();
+        
+        if (authState.isValid && authState.token && authState.user) {
+          setToken(authState.token);
+          setUserRole(authState.user.role);
+        }
       } catch (error) {
-        console.error('Failed to load token', error);
+        console.error('Failed to load auth state', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    checkToken();
+    checkAuthState();
   }, []);
 
   if (isLoading) {
@@ -41,11 +46,24 @@ export default function App() {
     );
   }
 
+  const getInitialRoute = () => {
+    if (!token || !userRole) return 'AuthScreen';
+    
+    switch (userRole) {
+      case 'TEACHER':
+        return 'TeacherHome';
+      case 'STUDENT':
+        return 'TeacherHome';
+      default:
+        return 'AuthScreen';
+    }
+  };
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName={token ? 'TeacherHome' : 'AuthScreen'}
+          initialRouteName={getInitialRoute()}
         >
           <Stack.Screen
             name="AuthScreen"

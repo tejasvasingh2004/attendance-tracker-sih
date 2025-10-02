@@ -1,6 +1,12 @@
 import express, { type Request, type Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { generateToken } from "../../../utils/jwt";
+import {
+  otpStore,
+  validateOTPFormat,
+  logOTPOperation,
+  MAX_OTP_ATTEMPTS,
+} from "../../../utils/otp";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -10,6 +16,7 @@ interface SignupRequestBody {
   name: string;
   employeeId: string;
   department: string;
+  otp: string;
 }
 
 interface LoginRequestBody {
@@ -25,7 +32,7 @@ router.post(
   "/signup",
   async (req: Request<{}, {}, SignupRequestBody>, res: Response) => {
     try {
-      const { email, name, employeeId, department } = req.body;
+      const { email, name, employeeId, department, otp } = req.body;
 
       if (!email) return res.status(400).json({ error: "Email is required" });
       if (!name) return res.status(400).json({ error: "Name is required" });
@@ -33,6 +40,15 @@ router.post(
         return res.status(400).json({ error: "Employee ID is required" });
       if (!department)
         return res.status(400).json({ error: "Department is required" });
+      if (!otp) return res.status(400).json({ error: "OTP is required" });
+
+      // Validate OTP format
+      if (!validateOTPFormat(otp)) {
+        return res.status(400).json({
+          error: "OTP must be a 6-digit number",
+          code: "INVALID_OTP_FORMAT",
+        });
+      }
 
       const existingEmail = await prisma.user.findUnique({ where: { email } });
       if (existingEmail) {
@@ -40,6 +56,52 @@ router.post(
           .status(400)
           .json({ error: "User already exists with this email" });
       }
+
+      // Verify OTP before creating account
+      const otpRecord = otpStore.get(email); // Using email as userId for OTP lookup
+
+      if (!otpRecord) {
+        logOTPOperation("VERIFY_SIGNUP", email, email, false);
+        return res.status(404).json({
+          error: "No OTP found for this email. Please generate a new OTP.",
+          code: "OTP_NOT_FOUND",
+        });
+      }
+
+      // Check if OTP has expired
+      if (Date.now() > otpRecord.expiresAt) {
+        otpStore.delete(email);
+        logOTPOperation("VERIFY_SIGNUP", email, email, false);
+        return res.status(410).json({
+          error: "OTP has expired. Please generate a new OTP.",
+          code: "OTP_EXPIRED",
+        });
+      }
+
+      // Check attempt limit
+      if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
+        otpStore.delete(email);
+        logOTPOperation("VERIFY_SIGNUP", email, email, false);
+        return res.status(429).json({
+          error: "Maximum verification attempts exceeded. Please generate a new OTP.",
+          code: "MAX_ATTEMPTS_EXCEEDED",
+        });
+      }
+
+      // Verify OTP
+      if (otpRecord.otp !== otp) {
+        otpRecord.attempts++;
+        logOTPOperation("VERIFY_SIGNUP", email, email, false);
+        return res.status(400).json({
+          error: "Invalid OTP",
+          code: "INVALID_OTP",
+          remainingAttempts: MAX_OTP_ATTEMPTS - otpRecord.attempts,
+        });
+      }
+
+      // OTP verified successfully, remove from store
+      otpStore.delete(email);
+      logOTPOperation("VERIFY_SIGNUP", email, email, true);
 
       const existingTeacher = await prisma.teacher.findUnique({
         where: { employeeId },
@@ -77,9 +139,17 @@ router.post(
         },
       });
 
+      // Generate JWT token for the newly created user
+      const token = generateToken({ 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role 
+      });
+
       return res.status(201).json({
-        message: "Teacher account created successfully",
+        message: "Teacher account created and verified successfully",
         user,
+        token,
       });
     } catch (error) {
       console.error("Teacher signup error:", error);
@@ -115,6 +185,7 @@ router.post(
         },
       };
 
+      // Generate JWT token with standardized payload structure: userId, email, role
       const token = generateToken({ 
         userId: teacher.user.id, 
         email: teacher.user.email,

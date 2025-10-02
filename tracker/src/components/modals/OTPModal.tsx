@@ -10,13 +10,13 @@ import {
 
 interface OTPModalProps {
   visible: boolean;
-  userId: string;
   email: string;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (otp: string) => void;
+  onResend?: () => void;
 }
 
-export default ({ visible, onClose, onSuccess }: OTPModalProps) => {
+export default ({ visible, email, onClose, onSuccess, onResend }: OTPModalProps) => {
   const [otp, setOtp] = useState('');
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<TextInput[]>([]);
@@ -25,7 +25,7 @@ export default ({ visible, onClose, onSuccess }: OTPModalProps) => {
     const otpToVerify = code || otp;
     console.log('Verifying OTP:', otpToVerify);
     if (otpToVerify.length === 6) {
-      onSuccess();
+      onSuccess(otpToVerify);
     }
   };
 
@@ -53,6 +53,12 @@ export default ({ visible, onClose, onSuccess }: OTPModalProps) => {
     }
   };
 
+  const handleResend = () => {
+    if (onResend) {
+      onResend();
+    }
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -62,8 +68,7 @@ export default ({ visible, onClose, onSuccess }: OTPModalProps) => {
           </View>
           <View style={styles.body}>
             <Text style={styles.description}>
-              Please enter the 6-digit OTP sent to your registered email
-              address.
+              Please enter the 6-digit OTP sent to {email}
             </Text>
             <View style={styles.otpContainer}>
               {otpValues.map((value, index) => (
@@ -94,6 +99,9 @@ export default ({ visible, onClose, onSuccess }: OTPModalProps) => {
                 />
               ))}
             </View>
+            <TouchableOpacity style={styles.resendButton} onPress={handleResend}>
+              <Text style={styles.resendButtonText}>Resend OTP</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.footer}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
@@ -149,66 +157,69 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    textAlign: 'center',
     color: '#6b7280',
+    textAlign: 'center',
     marginBottom: 20,
-    lineHeight: 20,
   },
   otpContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   input: {
-    width: 45,
-    height: 45,
-    borderWidth: 1,
+    width: 40,
+    height: 50,
+    borderWidth: 2,
     borderRadius: 8,
-    textAlign: 'center',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#111827',
-    backgroundColor: '#ffffff',
-    marginHorizontal: 4,
   },
   emptyInput: {
-    borderColor: '#e2e8f0',
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
   },
   filledInput: {
     borderColor: '#3b82f6',
-    borderWidth: 2,
+    backgroundColor: '#ffffff',
+  },
+  resendButton: {
+    alignSelf: 'center',
+    padding: 8,
+  },
+  resendButtonText: {
+    fontSize: 14,
+    color: '#3b82f6',
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    backgroundColor: '#f3f4f6',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    marginRight: 8,
+    alignItems: 'center',
   },
   cancelButtonText: {
-    textAlign: 'center',
     fontSize: 16,
-    fontWeight: '500',
     color: '#6b7280',
+    fontWeight: '600',
   },
   verifyButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
     backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginLeft: 8,
+    alignItems: 'center',
   },
   verifyButtonText: {
-    textAlign: 'center',
     fontSize: 16,
-    fontWeight: '500',
     color: '#ffffff',
+    fontWeight: '600',
   },
 });
