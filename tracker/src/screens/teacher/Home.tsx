@@ -1,3 +1,4 @@
+// screens/TeacherHome.tsx
 import React, { useState } from 'react';
 import {
   SafeAreaView,
@@ -5,148 +6,23 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
+  StyleSheet,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-
-type Session = {
-  startEndTime: string;
-  title: string;
-  details: string;
-  imageUri: string;
-};
-
+import SessionCard, { Session } from '../../components/teacher/SessionCard';
+import { useAuth } from '../../hooks/useAuth';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { fontSize } from '../../utils/scale';
 
 type TeacherHomeProps = {
   navigation: NativeStackNavigationProp<any>;
 };
 
-function SessionCard({
-  session,
-  onStartAttendance,
-}: {
-  session: Session;
-  onStartAttendance: (session: Session) => void;
-}) {
-  return (
-    <View
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-      >
-        <View style={{ flex: 1, paddingRight: 16 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: '#10b981',
-                marginRight: 8,
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: '#64748b',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
-              {session.startEndTime}
-            </Text>
-          </View>
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: '800',
-              color: '#0f172a',
-              marginBottom: 8,
-              lineHeight: 28,
-            }}
-          >
-            {session.title}
-          </Text>
-          <Text
-            style={{
-              fontSize: 15,
-              color: '#64748b',
-              fontWeight: '500',
-            }}
-          >
-            {session.details}
-          </Text>
-        </View>
-        <Image
-          source={{ uri: session.imageUri }}
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 16,
-            backgroundColor: '#f1f5f9',
-          }}
-          resizeMode="cover"
-        />
-      </View>
-      <TouchableOpacity
-        onPress={() => onStartAttendance(session)}
-        style={{
-          backgroundColor: '#3b82f6',
-          borderRadius: 12,
-          paddingVertical: 16,
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: '#3b82f6',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      >
-        <Text
-          style={{
-            color: '#ffffff',
-            fontSize: 16,
-            fontWeight: '700',
-            letterSpacing: 0.5,
-          }}
-        >
-          Start Attendance
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 export default function TeacherHome({ navigation }: TeacherHomeProps) {
   const [selectedTab, setSelectedTab] = useState<'today' | 'yesterday'>(
     'today',
   );
+  const { logout } = useAuth();
 
   const onStartAttendance = (session: Session) => {
     navigation.navigate('AttendanceScreen', { session });
@@ -155,6 +31,15 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
   const handleTabChange = (tab: 'today' | 'yesterday') => {
     setSelectedTab(tab);
   };
+
+  const handleLogout = async () => {
+    await logout();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'AuthScreen' }],
+    });
+  };
+
   const upcomingSessions: Session[] = [
     {
       startEndTime: '9:00 AM - 10:00 AM',
@@ -173,75 +58,46 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView style={styles.safe}>
+      <View style={styles.container}>
         {/* Header */}
-        <View
-          style={{
-            backgroundColor: '#ffffff',
-            borderBottomWidth: 1,
-            borderBottomColor: '#e2e8f0',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-            }}
-          >
+        <View style={styles.headerContainer}>
+          <View style={styles.headerRow}>
             <View>
               <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: '800',
-                  color: '#0f172a',
-                  marginBottom: 4,
-                }}
+                style={styles.title}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
                 Attendance
               </Text>
               <Text
-                style={{
-                  fontSize: 14,
-                  color: '#64748b',
-                  fontWeight: '500',
-                }}
+                style={styles.subtitle}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
                 Manage your classes
               </Text>
             </View>
-            <View style={{ position: 'relative' }}>
+
+            <View style={styles.headerActions}>
+              <View style={{ position: 'relative' }}>
+                <TouchableOpacity
+                  style={styles.iconWrap}
+                  accessibilityLabel="Notifications"
+                >
+                  <MaterialIcons name="notifications" size={20} color="#475569" />
+                </TouchableOpacity>
+                <View style={styles.notifyDot} />
+              </View>
+
               <TouchableOpacity
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  backgroundColor: '#f1f5f9',
-                }}
-                accessibilityLabel="Notifications"
+                style={styles.iconWrap}
+                onPress={handleLogout}
+                accessibilityLabel="Logout"
               >
-                <MaterialIcons name="notifications" size={24} color="#475569" />
+                <MaterialIcons name="logout" size={20} color="#475569" />
               </TouchableOpacity>
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  height: 8,
-                  width: 8,
-                  borderRadius: 4,
-                  backgroundColor: '#ef4444',
-                  borderWidth: 2,
-                  borderColor: '#ffffff',
-                }}
-              />
             </View>
           </View>
         </View>
@@ -253,71 +109,41 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
         >
           <View style={{ gap: 32 }}>
             {/* Tab Selector */}
-            <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  backgroundColor: '#f1f5f9',
-                  borderRadius: 12,
-                  padding: 4,
-                  position: 'relative',
-                }}
-              >
+            <View style={{ paddingHorizontal: 24, paddingTop: 20 }}>
+              <View style={styles.tabWrap}>
                 <View
-                  style={{
-                    position: 'absolute',
-                    top: 4,
-                    left: selectedTab === 'today' ? 4 : '50%',
-                    width: '50%',
-                    height: 40,
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 8,
-                    shadowColor: '#3b82f6',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 3,
-                  }}
+                  style={[
+                    styles.tabSlider,
+                    { left: selectedTab === 'today' ? 4 : '50%' },
+                  ]}
                 />
                 <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    borderRadius: 8,
-                    zIndex: 1,
-                  }}
+                  style={styles.tabButton}
                   onPress={() => handleTabChange('today')}
                 >
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: selectedTab === 'today' ? '#ffffff' : '#64748b',
-                      textAlign: 'center',
-                    }}
+                    style={[
+                      styles.tabText,
+                      selectedTab === 'today' && styles.tabTextActive,
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
                   >
                     Today
                   </Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                    borderRadius: 8,
-                    zIndex: 1,
-                  }}
+                  style={styles.tabButton}
                   onPress={() => handleTabChange('yesterday')}
                 >
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color:
-                        selectedTab === 'yesterday' ? '#ffffff' : '#64748b',
-                      textAlign: 'center',
-                    }}
+                    style={[
+                      styles.tabText,
+                      selectedTab === 'yesterday' && styles.tabTextActive,
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
                   >
                     Yesterday
                   </Text>
@@ -327,32 +153,9 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
 
             {/* Upcoming Sessions */}
             <View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 20,
-                  paddingHorizontal: 24,
-                }}
-              >
-                <View
-                  style={{
-                    width: 4,
-                    height: 24,
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 2,
-                    marginRight: 12,
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: '800',
-                    color: '#0f172a',
-                  }}
-                >
-                  Upcoming Classes
-                </Text>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionMarker} />
+                <Text style={styles.sectionTitle}>Upcoming Classes</Text>
               </View>
               <View style={{ gap: 20, paddingHorizontal: 24 }}>
                 {upcomingSessions.map(s => (
@@ -367,211 +170,41 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
 
             {/* Completed Sessions */}
             <View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 20,
-                  paddingHorizontal: 24,
-                }}
-              >
-                <View
-                  style={{
-                    width: 4,
-                    height: 24,
-                    backgroundColor: '#10b981',
-                    borderRadius: 2,
-                    marginRight: 12,
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: '800',
-                    color: '#0f172a',
-                  }}
-                >
-                  Completed Classes
-                </Text>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionMarker, { backgroundColor: '#10b981' }]} />
+                <Text style={styles.sectionTitle}>Completed Classes</Text>
               </View>
+
               <View style={{ gap: 20, paddingHorizontal: 24 }}>
-                <View
-                  style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: '#e2e8f0',
-                    padding: 20,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.08,
-                    shadowRadius: 8,
-                    elevation: 3,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 20,
-                    }}
-                  >
+                {/* Example completed card — keep layout responsive */}
+                <View style={styles.completedCard}>
+                  <View style={styles.completedTop}>
                     <View>
-                      <Text
-                        style={{
-                          fontSize: 20,
-                          fontWeight: '800',
-                          color: '#0f172a',
-                          marginBottom: 4,
-                        }}
-                      >
+                      <Text style={styles.completedTitle} numberOfLines={1} adjustsFontSizeToFit>
                         Chemistry 101
                       </Text>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          color: '#64748b',
-                          fontWeight: '500',
-                        }}
-                      >
+                      <Text style={styles.completedMeta} numberOfLines={1} adjustsFontSizeToFit>
                         8:00 AM - 9:00 AM
                       </Text>
                     </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 20,
-                        backgroundColor: '#dcfce7',
-                      }}
-                    >
-                      <MaterialIcons
-                        name="check-circle"
-                        size={16}
-                        color="#15803d"
-                      />
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: '#15803d',
-                          marginLeft: 6,
-                        }}
-                      >
-                        Completed
-                      </Text>
+                    <View style={styles.completedBadge}>
+                      <MaterialIcons name="check-circle" size={16} color="#15803d" />
+                      <Text style={styles.completedBadgeText}>Completed</Text>
                     </View>
                   </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      gap: 12,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 12,
-                        backgroundColor: '#f8fafc',
-                        padding: 16,
-                        borderWidth: 1,
-                        borderColor: '#e2e8f0',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: '#64748b',
-                          marginBottom: 4,
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.5,
-                        }}
-                      >
-                        Total
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 24,
-                          fontWeight: '800',
-                          color: '#0f172a',
-                        }}
-                      >
-                        30
-                      </Text>
+
+                  <View style={styles.completedStatsRow}>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>Total</Text>
+                      <Text style={styles.statValue}>30</Text>
                     </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 12,
-                        backgroundColor: '#dcfce7',
-                        padding: 16,
-                        borderWidth: 1,
-                        borderColor: '#bbf7d0',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: '#15803d',
-                          marginBottom: 4,
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.5,
-                        }}
-                      >
-                        Present
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 24,
-                          fontWeight: '800',
-                          color: '#166534',
-                        }}
-                      >
-                        28
-                      </Text>
+                    <View style={[styles.statBox, styles.presentBox]}>
+                      <Text style={styles.statLabelPresent}>Present</Text>
+                      <Text style={[styles.statValue, { color: '#166534' }]}>28</Text>
                     </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 12,
-                        backgroundColor: '#fee2e2',
-                        padding: 16,
-                        borderWidth: 1,
-                        borderColor: '#fecaca',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          fontWeight: '600',
-                          color: '#dc2626',
-                          marginBottom: 4,
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.5,
-                        }}
-                      >
-                        Absent
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 24,
-                          fontWeight: '800',
-                          color: '#b91c1c',
-                        }}
-                      >
-                        2
-                      </Text>
+                    <View style={[styles.statBox, styles.absentBox]}>
+                      <Text style={styles.statLabelAbsent}>Absent</Text>
+                      <Text style={[styles.statValue, { color: '#b91c1c' }]}>2</Text>
                     </View>
                   </View>
                 </View>
@@ -583,3 +216,106 @@ export default function TeacherHome({ navigation }: TeacherHomeProps) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#fff' },
+  headerContainer: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+  },
+  title: {
+    fontSize: fontSize(20), // reduced
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: fontSize(13),
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  headerActions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  iconWrap: {
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    marginLeft: 8,
+  },
+  notifyDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    height: 8,
+    width: 8,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  tabWrap: {
+    flexDirection: 'row',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    padding: 4,
+    position: 'relative',
+    height: 48,
+  },
+  tabSlider: {
+    position: 'absolute',
+    top: 4,
+    width: '50%',
+    height: 40,
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabButton: { flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, zIndex: 1, alignItems: 'center', justifyContent: 'center' },
+  tabText: { fontSize: fontSize(14), fontWeight: '600', color: '#64748b', textAlign: 'center' },
+  tabTextActive: { color: '#fff' },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, paddingHorizontal: 24 },
+  sectionMarker: { width: 4, height: 24, backgroundColor: '#3b82f6', borderRadius: 2, marginRight: 12 },
+  sectionTitle: { fontSize: fontSize(18), fontWeight: '800', color: '#0f172a' },
+  completedCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  completedTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  completedTitle: { fontSize: fontSize(16), fontWeight: '800', color: '#0f172a', marginBottom: 4 },
+  completedMeta: { fontSize: fontSize(13), color: '#64748b', fontWeight: '500' },
+  completedBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, backgroundColor: '#dcfce7' },
+  completedBadgeText: { fontSize: fontSize(12), fontWeight: '600', color: '#15803d', marginLeft: 6 },
+  completedStatsRow: { flexDirection: 'row', gap: 12 },
+  statBox: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#f8fafc', padding: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  presentBox: { backgroundColor: '#dcfce7', borderColor: '#bbf7d0' },
+  absentBox: { backgroundColor: '#fee2e2', borderColor: '#fecaca' },
+  statLabel: { fontSize: fontSize(12), fontWeight: '600', color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statLabelPresent: { fontSize: fontSize(12), fontWeight: '600', color: '#15803d', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statLabelAbsent: { fontSize: fontSize(12), fontWeight: '600', color: '#dc2626', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { fontSize: fontSize(20), fontWeight: '800', color: '#0f172a' },
+});

@@ -12,7 +12,7 @@ model User {
   email String @unique
   role  Role
 
-  name      String?
+  name      String
   createdAt DateTime @default(now())
 
   admin   Admin?

@@ -1,130 +1,124 @@
-/**
- * OTP Verification Modal
- * Modal component for OTP verification during login
- */
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   Modal,
-  Alert,
+  StyleSheet,
+  TextInput,
 } from 'react-native';
-import OTPInput from 'react-native-otp-inputs';
-import { useOTP } from '../../hooks/useAuth';
 
 interface OTPModalProps {
   visible: boolean;
-  userId: string;
   email: string;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (otp: string) => void;
+  onResend?: () => void;
 }
 
-const OTPModal: React.FC<OTPModalProps> = ({
-  visible,
-  userId,
-  email,
-  onClose,
-  onSuccess,
-}) => {
+export default ({ visible, email, onClose, onSuccess, onResend }: OTPModalProps) => {
   const [otp, setOtp] = useState('');
-  const { verifyOTP, resendOTP, loading } = useOTP();
+  const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+  const inputRefs = useRef<TextInput[]>([]);
 
-  const handleVerifyOTP = useCallback(async () => {
-    if (otp.length !== 6) {
-      Alert.alert('Error', 'Please enter a valid 6-digit OTP');
-      return;
+  const handleVerifyOtp = (code?: string) => {
+    const otpToVerify = code || otp;
+    console.log('Verifying OTP:', otpToVerify);
+    if (otpToVerify.length === 6) {
+      onSuccess(otpToVerify);
+    }
+  };
+
+  const handleOtpChange = (value: string, index: number) => {
+    const newOtpValues = [...otpValues];
+    newOtpValues[index] = value;
+    setOtpValues(newOtpValues);
+
+    const otpString = newOtpValues.join('');
+    setOtp(otpString);
+
+    if (otpString.length === 6) {
+      handleVerifyOtp(otpString);
     }
 
-    try {
-      const result = await verifyOTP(userId, otp);
-      if (result) {
-        setOtp(''); // Clear OTP on success
-        onSuccess();
-      }
-    } catch (error) {
-      console.error('Verify OTP Error:', error);
+    // Auto-focus next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
-  }, [userId, otp, verifyOTP, onSuccess]);
+  };
 
-  const handleResendOTP = useCallback(async () => {
-    try {
-      await resendOTP(userId);
-    } catch (error) {
-      console.error('Resend OTP Error:', error);
+  const handleKeyPress = (key: string, index: number) => {
+    if (key === 'Backspace' && !otpValues[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
     }
-  }, [userId, resendOTP]);
+  };
 
-  const handleClose = useCallback(() => {
-    setOtp(''); // Clear OTP when closing
-    onClose();
-  }, [onClose]);
+  const handleResend = () => {
+    if (onResend) {
+      onResend();
+    }
+  };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>Verify OTP</Text>
-          <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to{'\n'}
-            <Text style={styles.email}>{email}</Text>
-          </Text>
-
-          <View style={styles.otpContainer}>
-            <OTPInput
-              value={otp}
-              handleChange={setOtp}
-              numberOfInputs={6}
-              autofillFromClipboard={false}
-              style={styles.otpInput}
-              inputStyles={styles.otpInputStyle}
-              focusStyles={styles.otpFocusStyle}
-            />
+          <View style={styles.header}>
+            <Text style={styles.title}>Enter OTP</Text>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleVerifyOTP}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? 'Verifying...' : 'Verify OTP'}
+          <View style={styles.body}>
+            <Text style={styles.description}>
+              Please enter the 6-digit OTP sent to {email}
             </Text>
-          </TouchableOpacity>
-
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn't receive the code?</Text>
-            <TouchableOpacity
-              onPress={handleResendOTP}
-              disabled={loading}
-            >
-              <Text style={[styles.resendLink, loading && styles.resendLinkDisabled]}>
-                Resend OTP
-              </Text>
+            <View style={styles.otpContainer}>
+              {otpValues.map((value, index) => (
+                <TextInput
+                  key={index}
+                  ref={ref => {
+                    if (ref) inputRefs.current[index] = ref;
+                  }}
+                  style={[
+                    styles.input,
+                    value ? styles.filledInput : styles.emptyInput,
+                  ]}
+                  value={value}
+                  onChangeText={text => {
+                    // Only allow single digit
+                    if (text.length <= 1) {
+                      handleOtpChange(text, index);
+                    }
+                  }}
+                  onKeyPress={({ nativeEvent }) => {
+                    handleKeyPress(nativeEvent.key, index);
+                  }}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  textAlign="center"
+                  selectTextOnFocus={true}
+                  autoFocus={index === 0}
+                />
+              ))}
+            </View>
+            <TouchableOpacity style={styles.resendButton} onPress={handleResend}>
+              <Text style={styles.resendButtonText}>Resend OTP</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleClose}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.verifyButton}
+              onPress={() => handleVerifyOtp()}
+            >
+              <Text style={styles.verifyButtonText}>Verify</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
   );
 };
-
-export default OTPModal;
 
 const styles = StyleSheet.create({
   overlay: {
@@ -134,90 +128,98 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
-    padding: 24,
-    width: '90%',
+    padding: 20,
+    margin: 20,
+    minWidth: 300,
     maxWidth: 400,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  header: {
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 32,
-    color: '#666',
+    color: '#111827',
   },
-  email: {
-    fontWeight: 'bold',
-    color: '#1E90FF',
+  body: {
+    marginBottom: 20,
+  },
+  description: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   otpContainer: {
-    marginBottom: 32,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  otpInput: {
+  input: {
+    width: 40,
+    height: 50,
+    borderWidth: 2,
+    borderRadius: 8,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  emptyInput: {
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+  },
+  filledInput: {
+    borderColor: '#3b82f6',
+    backgroundColor: '#ffffff',
+  },
+  resendButton: {
+    alignSelf: 'center',
+    padding: 8,
+  },
+  resendButtonText: {
+    fontSize: 14,
+    color: '#3b82f6',
+    fontWeight: '600',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  otpInputStyle: {
-    width: 45,
-    height: 55,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  otpFocusStyle: {
-    borderColor: '#1E90FF',
-    backgroundColor: '#f0f8ff',
-  },
-  button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#1E90FF',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  buttonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  resendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  resendText: {
-    color: '#666',
-    marginRight: 5,
-  },
-  resendLink: {
-    color: '#1E90FF',
-    fontWeight: 'bold',
-  },
-  resendLinkDisabled: {
-    color: '#ccc',
-  },
   cancelButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginRight: 8,
+    alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#666',
     fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  verifyButton: {
+    flex: 1,
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginLeft: 8,
+    alignItems: 'center',
+  },
+  verifyButtonText: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '600',
   },
 });

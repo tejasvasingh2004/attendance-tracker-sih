@@ -15,6 +15,7 @@ export interface Student {
   id: string;
   name: string;
   email: string;
+  role: string;
   rollNumber: string;
   year: number;
   section: string;
@@ -30,7 +31,7 @@ export interface StudentLoginRequest {
 
 export interface StudentLoginResponse extends BaseApiResponse {
   user: Student;
-  token?: string;
+  token: string;
 }
 
 export interface StudentSignupRequest {
@@ -40,40 +41,40 @@ export interface StudentSignupRequest {
   year: number;
   section: string;
   hardwareId: string;
+  otp: string;
+}
+
+export interface StudentCheckRequest {
+  email?: string;
+  hardwareId?: string;
+  rollNumber?: string;
+}
+
+export interface StudentCheckResponse extends BaseApiResponse {
+  exists: boolean;
 }
 
 export interface StudentSignupResponse extends BaseApiResponse {
   user: Student;
+  token: string;
 }
 
 // OTP related types
 export interface OTPGenerateRequest {
-  userId: string;
   email: string;
 }
 
 export interface OTPGenerateResponse extends BaseApiResponse {
-  otpId?: string;
-  expiresAt?: string;
-}
-
-export interface OTPVerifyRequest {
-  userId: string;
-  otp: string;
-}
-
-export interface OTPVerifyResponse extends BaseApiResponse {
-  verified: boolean;
-  token?: string;
+  expiresIn?: number;
+  alreadyExists?: boolean;
 }
 
 export interface OTPResendRequest {
-  userId: string;
+  email: string;
 }
 
 export interface OTPResendResponse extends BaseApiResponse {
-  otpId?: string;
-  expiresAt?: string;
+  expiresIn?: number;
 }
 
 // Teacher related types
@@ -81,6 +82,7 @@ export interface Teacher {
   id: string;
   name: string;
   email: string;
+  role: string;
   department: string;
   employeeId: string;
   createdAt?: string;
@@ -93,8 +95,30 @@ export interface TeacherLoginRequest {
 }
 
 export interface TeacherLoginResponse extends BaseApiResponse {
-  teacher: Teacher;
-  token?: string;
+  user: Teacher;
+  token: string;
+}
+
+export interface TeacherSignupRequest {
+  email: string;
+  name: string;
+  employeeId: string;
+  department: string;
+  otp: string;
+}
+
+export interface TeacherSignupResponse extends BaseApiResponse {
+  user: Teacher;
+  token: string;
+}
+
+export interface TeacherCheckRequest {
+  email?: string;
+  employeeId?: string;
+}
+
+export interface TeacherCheckResponse extends BaseApiResponse {
+  exists: boolean;
 }
 
 // Attendance related types
@@ -171,7 +195,7 @@ export interface ApiResponse<T = any> extends BaseApiResponse {
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 // API endpoint types
-export type ApiEndpoint = 
+export type ApiEndpoint =
   | '/students/login'
   | '/students/signup'
   | '/students/profile'
